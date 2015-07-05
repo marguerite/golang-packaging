@@ -1,0 +1,103 @@
+#!/usr/bin/env ruby
+
+#@path = "/home/abuild/rpmbuild/SPECS"
+@path = `pwd`.gsub(/\n/,'')
+
+@specfile = Dir.glob("#{@path}/*.spec")[0]
+
+def find_importpath()
+
+	found = 0
+
+	File.open(@specfile) do |f|
+
+		f.each_line do |l|
+
+			if l.index(/%(define|global)[\s]+(import_path|importpath)/i) then
+
+				@importpath = l.gsub(/%(define|global)[\s]+(import_path|importpath)/i,'').lstrip!.chomp!.gsub(/"/,'').gsub(/"/,'')
+
+				found = 1
+
+			end
+
+		end
+
+	end
+
+	unless found == 1 then
+
+		File.open(@specfile) do |f|
+
+			f.each_line do |l|
+
+				if l.index("%goprep") then 
+
+					@importpath = l.gsub(/%goprep/,'').lstrip!.chomp!
+
+					found = 1
+
+				end
+
+
+			end
+
+		end
+
+	end
+
+	unless found == 1 then
+
+		File.open(@specfile) do |f|
+
+			f.each_line do |l|
+
+				if l.index("Url:") then
+
+					@importpath = l.gsub(/Url\:/,'').lstrip!.chomp!.gsub(/^(http|https)\:\/\//,'')
+
+					found = 1
+
+				end
+
+			end
+
+		end
+
+	end
+
+	return @importpath
+
+end
+
+def find_own_version()
+
+	File.open(@specfile) do |f|
+
+		f.each_line do |l|
+
+			if l.index("Version:") then
+
+				@version = l.gsub(/Version:/,'').lstrip!.chomp!
+
+			end
+
+		end
+
+	end
+
+	return @version
+
+end
+
+def golang_provides()
+
+	importpath = find_importpath()
+
+	version = find_own_version()
+
+	return "golang(" + importpath + ") = " + version
+
+end
+
+puts golang_provides()
