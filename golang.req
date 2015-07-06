@@ -65,15 +65,42 @@ def get_imports_list()
 
 	list = []
 
+	@own = `./golang.prov`.gsub(/golang\(/,'').gsub(/[\s]+=.*/,'')
+
 	source.each do |g|
 
 		File.open(g) do |f|
 
 			f.each_line do |l|
 
-				if l.index("import") then
+				# import should be the first word in a line, or it could be comment
 
-					if l.index
+				if l.index(/^import/) then
+
+					if l.index(/({|\()/)then
+
+						t = ""
+	
+						f.each_line do |l1|
+
+							t = t + l1
+
+						end
+
+						imports = t.gsub(/(\n|\t)/,'').gsub(/(\)|}).*$/,'').split(/"/)
+
+						imports.each do |i|
+
+							list << i if ( i.index(/(\.com|\.net|\.org)/) && ! l.index(@own) )
+
+						end
+
+					else
+
+
+						list << l.gsub(/import/,'').gsub(/"/,'').lstrip!.chomp! if ( l.index(/(\.com|\.net|\.org)/) && ! l.index(@own) )
+
+					end
 
 				end
 
@@ -83,7 +110,23 @@ def get_imports_list()
 
 	end
 
-	return source
+	unless list == nil then
+
+		importlist = []
+
+		list.uniq.each do |l|
+
+			importlist << "golang(" + l + ")"
+
+		end
+
+		return importlist
+
+	else
+
+		return nil
+
+	end
 
 end
 
