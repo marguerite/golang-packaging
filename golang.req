@@ -1,0 +1,90 @@
+#!/usr/bin/env ruby
+
+@path = `pwd`.gsub(/\n/,'')
+
+@specfile = Dir.glob("#{@path}/*.spec")[0]
+
+def find_build_directory()
+
+	File.open(@specfile) do |f|
+
+		f.each_line do |l|
+
+			if l.index("Name:") then
+
+				@pkgname = l.gsub(/Name:/,'').lstrip!.chomp!.gsub(/(go-|golang-)/,'')
+
+			end
+
+		end
+
+	end
+
+	#@build_directory = Dir.glob("/home/abuild/rpmbuild/BUILD/#{@pkgname}*")[0]
+	@build_directory = Dir.glob("#{@path}/#{@pkgname}*")[0]
+
+	return @build_directory
+
+end
+
+def all_file(dir="",result=nil)
+
+	result = [] unless result
+
+	Dir.entries(dir).each do |d|
+
+		unless (d == "." || d == ".." || d == "examples" || d == "test") then
+
+			if File.directory?("#{dir}/#{d}") then
+
+				all_file("#{dir}/#{d}",result)
+
+			else
+
+				if d.index(".go") then
+
+					result << "#{dir}/#{d}"
+
+				end
+
+			end
+
+		end
+
+	end
+
+	return result
+
+end
+
+def get_imports_list()
+
+	build = find_build_directory()
+
+	source = all_file(build)
+
+	list = []
+
+	source.each do |g|
+
+		File.open(g) do |f|
+
+			f.each_line do |l|
+
+				if l.index("import") then
+
+					if l.index
+
+				end
+
+			end
+
+		end
+
+	end
+
+	return source
+
+end
+
+puts get_imports_list()
