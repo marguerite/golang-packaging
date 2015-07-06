@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
-@path = `pwd`.gsub(/\n/,'')
+@path = "/home/abuild/rpmbuild/SOURCES"
+#@path = `pwd`.gsub(/\n/,'')
 
 @specfile = Dir.glob("#{@path}/*.spec")[0]
 
@@ -20,8 +21,8 @@ def find_build_directory()
 
 	end
 
-	#@build_directory = Dir.glob("/home/abuild/rpmbuild/BUILD/#{@pkgname}*")[0]
-	@build_directory = Dir.glob("#{@path}/#{@pkgname}*")[0]
+	@build_directory = Dir.glob("/home/abuild/rpmbuild/BUILD/#{@pkgname}*")[0]
+	#@build_directory = Dir.glob("#{@path}/#{@pkgname}*")[0]
 
 	return @build_directory
 

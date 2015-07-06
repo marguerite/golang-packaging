@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
-#@path = "/home/abuild/rpmbuild/SOURCES"
-@path = `pwd`.gsub(/\n/,'')
+@path = "/home/abuild/rpmbuild/SOURCES"
+#@path = `pwd`.gsub(/\n/,'')
 
 @specfile = Dir.glob("#{@path}/*.spec")[0]
 
