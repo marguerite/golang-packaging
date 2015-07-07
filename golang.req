@@ -13,7 +13,7 @@ def find_build_directory()
 
 			if l.index("Name:") then
 
-				@pkgname = l.gsub(/Name:/,'').lstrip!.chomp!.gsub(/(go-|golang-)/,'')
+				@pkgname = l.gsub(/Name:/,'').lstrip!.chomp!.gsub(/^(go|golang)-/,'')
 
 			end
 
@@ -21,8 +21,8 @@ def find_build_directory()
 
 	end
 
-	@build_directory = Dir.glob("/home/abuild/rpmbuild/BUILD/#{@pkgname}*")[0]
-	#@build_directory = Dir.glob("#{@path}/#{@pkgname}*")[0]
+	@build_directory = Dir.glob("/home/abuild/rpmbuild/BUILD/*#{@pkgname}*")[0]
+	#@build_directory = Dir.glob("#{@path}/*#{@pkgname}*")[0]
 
 	return @build_directory
 
@@ -66,11 +66,11 @@ def get_imports_list()
 
 	list = []
 
-	@own = `./golang.prov`.gsub(/golang\(/,'').gsub(/[\s]+=.*/,'')
+	@own = `/usr/lib/rpm/golang.prov`.gsub(/golang\(/,'').gsub(/[\s]+=.*/,'')
 
 	source.each do |g|
 
-		File.open(g) do |f|
+		File.open(g,:encoding => "UTF-8") do |f|
 
 			f.each_line do |l|
 
