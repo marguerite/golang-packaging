@@ -66,7 +66,8 @@ def get_imports_list()
 
 	list = []
 
-	@own = `/usr/lib/rpm/golang.prov`.gsub(/golang\(/,'').gsub(/[\s]+=.*/,'')
+	@own = `/usr/lib/rpm/golang.prov`.gsub(/golang\(/,'').gsub(/\)[\s]+=.*/,'').chomp!
+	#@own = `./golang.prov`.gsub(/golang\(/,'').gsub(/\)[\s]+=.*/,'').chomp!
 
 	source.each do |g|
 
@@ -92,7 +93,7 @@ def get_imports_list()
 
 						imports.each do |i|
 
-							list << i if ( i.index(/(\.com|\.net|\.org)/) && ! l.index(@own) )
+							list << i if ( i.index(/(\.com|\.net|\.org)/) && ! i.index(@own) )
 
 						end
 
