@@ -90,14 +90,93 @@ def find_own_version()
 
 end
 
-def golang_provides()
+def find_build_directory()
+
+        File.open(@specfile) do |f|
+
+                f.each_line do |l|
+
+                        if l.index("Name:") then
+
+                                @pkgname = l.gsub(/Name:/,'').lstrip!.chomp!.gsub(/^(go|golang)-/,'')
+
+                        end
+
+                end
+
+        end
+
+        @build_directory = Dir.glob("/home/abuild/rpmbuild/BUILD/*#{@pkgname}*")[0]
+        #@build_directory = Dir.glob("#{@path}/*#{@pkgname}*")[0]
+
+        return @build_directory
+
+end
+
+def all_dir(dir="",result=nil)
+
+	result = [] unless result
+
+	Dir.entries(dir).each do |d|
+
+		unless (d == "." || d == ".." || d == "examples" || d == "test") then
+
+                        if File.directory?("#{dir}/#{d}") then
+
+				result << "#{dir}/#{d}"
+
+                                all_dir("#{dir}/#{d}",result)
+
+                        end
+
+		end
+
+	end
+
+	return result
+
+end
+
+def strip_dir(result=[])
+
+	importpath = find_importpath()
+
+	build = find_build_directory()
+
+	striped_result = []
+
+	result.each do |r|
+
+		striped_result << importpath + r.gsub(build,'')
+
+	end
+
+	return striped_result
+
+end
+
+def get_provides_list()
+
+	build = find_build_directory()
+
+	source = strip_dir(all_dir(build))
 
 	importpath = find_importpath()
 
 	version = find_own_version()
 
-	return "golang(" + importpath + ") = " + version
+	list = []
+
+	list << "golang(" + importpath + ") = " + version
+
+	source.each do |s|
+
+		list << "golang(" + s + ") = " + version
+
+	end
+
+	return list
 
 end
 
-puts golang_provides()
+puts get_provides_list()
