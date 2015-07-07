@@ -1,44 +1,49 @@
 #!/usr/bin/env ruby
 
-@path = "/home/abuild/rpmbuild/SOURCES"
-#@path = `pwd`.gsub(/\n/,'')
+def prepare()
 
-@specfile = Dir.glob("#{@path}/*.spec")[0]
+	specfile = Dir.glob("/home/abuild/rpmbuild/SOURCES/*.spec")[0]
+	#specfile = Dir.glob(`pwd`.gsub(/\n/,'') + "/*.spec")[0]
 
-def find_importpath()
+	importpath,pkgname,version = "","",""
 
-	found = 0
-
-	File.open(@specfile) do |f|
+	File.open(specfile) do |f|
 
 		f.each_line do |l|
 
+                        if l.index("Name:") then
+
+                                pkgname = l.gsub(/Name:/,'').lstrip!.chomp!.gsub(/^(go|golang)-/,'')
+
+                        end
+
+                        if l.index("Version:") then
+
+                                version = l.gsub(/Version:/,'').lstrip!.chomp!
+
+                        end
+
+			found = 0
+
 			if l.index(/%(define|global)[\s]+(import_path|importpath)/i) then
 
-				@importpath = l.gsub(/%(define|global)[\s]+(import_path|importpath)/i,'').lstrip!.chomp!.gsub(/"/,'').gsub(/"/,'')
+				importpath = l.gsub(/%(define|global)[\s]+(import_path|importpath)/i,'').lstrip!.chomp!.gsub(/"/,'').gsub(/"/,'')
 
 				found = 1
 
 			end
 
-		end
+			if (found == 0 && l.index("%goprep")) then 
 
-	end
+				importpath = l.gsub(/%goprep/,'').lstrip!.chomp!
 
-	unless found == 1 then
+				found = 1
 
-		File.open(@specfile) do |f|
+			end
 
-			f.each_line do |l|
+			if (found == 0 && l.index("Url:")) then
 
-				if l.index("%goprep") then 
-
-					@importpath = l.gsub(/%goprep/,'').lstrip!.chomp!
-
-					found = 1
-
-				end
-
+				importpath = l.gsub(/Url\:/,'').lstrip!.chomp!.gsub(/^(http|https)\:\/\//,'')
 
 			end
 
@@ -46,70 +51,10 @@ def find_importpath()
 
 	end
 
-	unless found == 1 then
+        build = Dir.glob("/home/abuild/rpmbuild/BUILD/*#{pkgname}*")[0]
+        #build = Dir.glob(`pwd`.gsub(/\n/,'') + "/*#{pkgname}*")[0]
 
-		File.open(@specfile) do |f|
-
-			f.each_line do |l|
-
-				if l.index("Url:") then
-
-					@importpath = l.gsub(/Url\:/,'').lstrip!.chomp!.gsub(/^(http|https)\:\/\//,'')
-
-					found = 1
-
-				end
-
-			end
-
-		end
-
-	end
-
-	return @importpath
-
-end
-
-def find_own_version()
-
-	File.open(@specfile) do |f|
-
-		f.each_line do |l|
-
-			if l.index("Version:") then
-
-				@version = l.gsub(/Version:/,'').lstrip!.chomp!
-
-			end
-
-		end
-
-	end
-
-	return @version
-
-end
-
-def find_build_directory()
-
-        File.open(@specfile) do |f|
-
-                f.each_line do |l|
-
-                        if l.index("Name:") then
-
-                                @pkgname = l.gsub(/Name:/,'').lstrip!.chomp!.gsub(/^(go|golang)-/,'')
-
-                        end
-
-                end
-
-        end
-
-        @build_directory = Dir.glob("/home/abuild/rpmbuild/BUILD/*#{@pkgname}*")[0]
-        #@build_directory = Dir.glob("#{@path}/*#{@pkgname}*")[0]
-
-        return @build_directory
+	return importpath,build,version
 
 end
 
@@ -137,35 +82,23 @@ def all_dir(dir="",result=nil)
 
 end
 
-def strip_dir(result=[])
-
-	importpath = find_importpath()
-
-	build = find_build_directory()
-
-	striped_result = []
-
-	result.each do |r|
-
-		striped_result << importpath + r.gsub(build,'')
-
-	end
-
-	return striped_result
-
-end
-
 def get_provides_list()
 
-	build = find_build_directory()
+	importpath = prepare()[0]
 
-	source = strip_dir(all_dir(build))
+	build = prepare()[1]
 
-	importpath = find_importpath()
+	version = prepare()[2]
 
-	version = find_own_version()
+	source,list = [],[]
 
-	list = []
+	# all_dir return strings containing build, replace w/ importpath
+
+	all_dir(build).each do |r|
+
+		source << importpath + r.gsub(build,'')
+
+	end
 
 	list << "golang(" + importpath + ") = " + version
 

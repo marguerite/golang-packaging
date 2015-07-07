@@ -1,19 +1,21 @@
 #!/usr/bin/env ruby
 
-@path = "/home/abuild/rpmbuild/SOURCES"
-#@path = `pwd`.gsub(/\n/,'')
-
-@specfile = Dir.glob("#{@path}/*.spec")[0]
-
 def find_build_directory()
 
-	File.open(@specfile) do |f|
+	path = "/home/abuild/rpmbuild/SOURCES"
+	#path = `pwd`.gsub(/\n/,'')
+
+	specfile = Dir.glob(path + "/*.spec")[0]
+
+	pkgname = ""
+
+	File.open(specfile) do |f|
 
 		f.each_line do |l|
 
 			if l.index("Name:") then
 
-				@pkgname = l.gsub(/Name:/,'').lstrip!.chomp!.gsub(/^(go|golang)-/,'')
+				pkgname = l.gsub(/Name:/,'').lstrip!.chomp!.gsub(/^(go|golang)-/,'')
 
 			end
 
@@ -21,10 +23,10 @@ def find_build_directory()
 
 	end
 
-	@build_directory = Dir.glob("/home/abuild/rpmbuild/BUILD/*#{@pkgname}*")[0]
-	#@build_directory = Dir.glob("#{@path}/*#{@pkgname}*")[0]
+	build_directory = Dir.glob("/home/abuild/rpmbuild/BUILD/*#{pkgname}*")[0]
+	#build_directory = Dir.glob(path + "/*#{pkgname}*")[0]
 
-	return @build_directory
+	return build_directory
 
 end
 
@@ -66,8 +68,8 @@ def get_imports_list()
 
 	list = []
 
-	@own = `/usr/lib/rpm/golang.prov`.split(/\n/)[0].gsub(/golang\(/,'').gsub(/\)[\s]+=.*/,'')
-	#@own = `./golang.prov`.split(/\n/)[0].gsub(/golang\(/,'').gsub(/\)[\s]+=.*/,'')
+	own = `/usr/lib/rpm/golang.prov`.split(/\n/)[0].gsub(/golang\(/,'').gsub(/\)[\s]+=.*/,'')
+	#own = `./golang.prov`.split(/\n/)[0].gsub(/golang\(/,'').gsub(/\)[\s]+=.*/,'')
 
 	source.each do |g|
 
@@ -87,20 +89,23 @@ def get_imports_list()
 
 							t = t + l1
 
+							# we don't need that much, just a few lines, not whole text
+							break if l1.index(/\)/)
+
 						end
 
 						imports = t.gsub(/(\n|\t)/,'').gsub(/(\)|}).*$/,'').split(/"/)
 
 						imports.each do |i|
 
-							list << i if ( i.index(/(\.com|\.net|\.org)/) && ! i.index(@own) )
+							list << i if ( i.index(/(\.com|\.net|\.org)/) && ! i.index(own) )
 
 						end
 
 					else
 
 
-						list << l.gsub(/import/,'').gsub(/"/,'').lstrip!.chomp! if ( l.index(/(\.com|\.net|\.org)/) && ! l.index(@own) )
+						list << l.gsub(/import/,'').gsub(/"/,'').lstrip!.chomp! if ( l.index(/(\.com|\.net|\.org)/) && ! l.index(own) )
 
 					end
 
