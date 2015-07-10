@@ -11,7 +11,21 @@ def prepare()
 
 		f.each_line do |l|
 
-                        if l.index("Name:") then
+			build_found = 0
+
+			if l.index("Source:") then
+
+				unless l.index("%{name}") then
+
+					pkgname = l.gsub(/Source:/,'').lstrip!.chomp!.gsub(/^.*\//,'').gsub(/-%.*$/,'')
+
+					build_found = 1
+
+				end
+
+			end
+
+                        if (build_found == 0 && l.index("Name:")) then
 
                                 pkgname = l.gsub(/Name:/,'').lstrip!.chomp!.gsub(/^(go|golang)-/,'')
 
