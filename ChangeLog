@@ -1,6 +1,7 @@
 == Version 3 ==
 * skip *example*.go/*test*.go for Requires finding
 * support alias format (import xx "xxx") for importpath 
+* add golang-strip-builddep, a tool to strip unneeded importpath from source codes
 
 == Version 2 ==
 * fix pkgname detection

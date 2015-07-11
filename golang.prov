@@ -78,7 +78,7 @@ def all_dir(dir="",result=nil)
 
 	Dir.entries(dir).each do |d|
 
-		unless (d == "." || d == ".." || d == "examples" || d == "test") then
+		unless (d == "." || d == ".." || d.index("example") || d.index("test")) then
 
                         if File.directory?("#{dir}/#{d}") then
 
