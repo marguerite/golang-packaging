@@ -1,0 +1,9 @@
+== Version 3 ==
+* skip *example*.go/*test*.go for Requires finding
+* support alias format (import xx "xxx") for importpath 
+
+== Version 2 ==
+* fix pkgname detection
+
+== Version 1 ==
+* implement Requires/Provides
