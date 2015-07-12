@@ -13,11 +13,11 @@ def prepare()
 
 			build_found = 0
 
-			if l.index("Source:") then
+			if l.index(/Source(0)?:/) then
 
 				unless l.index("%{name}") then
 
-					pkgname = l.gsub(/Source:/,'').lstrip!.chomp!.gsub(/^.*\//,'').gsub(/-%.*$/,'')
+					pkgname = l.gsub(/Source(0)?:/,'').lstrip!.chomp!.gsub(/^.*\//,'').gsub(/-%.*$/,'')
 
 					build_found = 1
 
