@@ -125,7 +125,7 @@ def strip_unneed_dependency()
 
 		source.each do |s|
 
-			if File.readlines(s).grep(/#{opt}/).size > 0
+			if File.readlines(s, :encoding => "UTF-8").grep(/#{opt}/).size > 0
 
 				delete_line(s,opt)	
 
