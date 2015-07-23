@@ -1,10 +1,25 @@
+== Version 5 ==
+
+  * if a sub-directory doesn't contain any *.go file, do not
+    treat it as a Provides candidate.
+  * add /usr/bin to golang.attr for go executes to be handled
+    by golang-packaging
+
+== Version 4 ==
+
+  * fix encoding error in golang-strip-builddep
+  * add macros.go-extra, extra golang macros for packaging
+
 == Version 3 ==
-* skip *example*.go/*test*.go for Requires finding
-* support alias format (import xx "xxx") for importpath 
-* add golang-strip-builddep, a tool to strip unneeded importpath from source codes
+
+  * skip *example*.go/*test*.go for Requires finding
+  * support alias format (import xx "xxx") for importpath 
+  * add golang-strip-builddep, a tool to strip unneeded importpath from source codes
 
 == Version 2 ==
-* fix pkgname detection
+
+  * fix pkgname detection
 
 == Version 1 ==
-* implement Requires/Provides
+
+  * implement Requires/Provides
