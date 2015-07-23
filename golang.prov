@@ -82,7 +82,7 @@ def all_dir(dir="",result=nil)
 
                         if File.directory?("#{dir}/#{d}") then
 
-				result << "#{dir}/#{d}"
+				result << "#{dir}/#{d}" if ! Dir["#{dir}/#{d}/*.go"].empty?
 
                                 all_dir("#{dir}/#{d}",result)
 
