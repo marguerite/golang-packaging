@@ -38,7 +38,7 @@ def find_build_directory()
 	end
 
 	build = Dir.glob("/home/abuild/rpmbuild/BUILD/*#{pkgname}*")[0]
-	#build = Dir.glob(path + "/*#{pkgname}*")[0]
+	#build = Dir.glob(path + "/*#{pkgname}*/")[0]
 
 	return build
 
@@ -112,7 +112,9 @@ def get_imports_list()
 
 						imports.each do |i|
 
-							list << i if ( i.index(/(\.com|\.net|\.org)/) && ! i.index(own) )
+							# .com|.net|.org matches all URL, own strips its own url, [\s] (whitespace)
+							# guarantees it doens't match a sentence like comments
+							list << i if ( i.index(/(\.com|\.net|\.org)/) && ! i.index(own) && ! i.index(/[\s]/) )
 
 						end
 
