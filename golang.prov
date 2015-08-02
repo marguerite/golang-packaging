@@ -68,6 +68,8 @@ def prepare()
         build = Dir.glob("/home/abuild/rpmbuild/BUILD/*#{pkgname}*")[0]
         #build = Dir.glob(`pwd`.gsub(/\n/,'') + "/*#{pkgname}*/")[0]
 
+	importpath = importpath.gsub(/\/$/,'') if importpath.index(/\/$/)
+
 	return importpath,build,version
 
 end
