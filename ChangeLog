@@ -1,3 +1,20 @@
+== update version 9 ==
+
+  * update golang(API) to 1.5
+
+== update version 8 ==
+
+  * skip the last "/" in golang.prov, thanks to matwey
+
+== udpate version 7 ==
+
+  * handle gopkg.in/* requirements
+
+== update version 6 ==
+
+  * fix golang.req to not treat a sentence as importpath
+  * fix golang.attr to correctly detect /usr/bin/*
+
 == Version 5 ==
 
   * if a sub-directory doesn't contain any *.go file, do not
