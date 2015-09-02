@@ -1,4 +1,4 @@
-ndir}/*|/usr/lib(64)?/go/contrib/pkg/linux_(386|amd64)/.*\\.a)$
+ndir}/*|/usr/lib(64)?/go/contrib/pkg/linux_(386|amd64|ppc64|ppc64(le)?)/.*\\.a)$
 %__golang_requires  %{_rpmconfigdir}/golang.req
 %__golang_provides  %{_rpmconfigdir}/golang.prov
-%__golang_path  ^(/usr/lib(64)?/go/contrib/pkg/linux_(386|amd64)/.*\\.a|%{_bindir}/.*)$
+%__golang_path  ^(/usr/lib(64)?/go/contrib/pkg/linux_(386|amd64|ppc64|ppc64(le)?)/.*\\.a|%{_bindir}/.*)$
