@@ -11,4 +11,4 @@ you automatically. You can also say
 
 >  BuildRequires: golang(xxx) 
 
-in specifications for for packages built with golang-packaging.
+in specifications for packages built with golang-packaging.
