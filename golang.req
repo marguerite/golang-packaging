@@ -98,7 +98,7 @@ def get_imports_list()
 
 				if l.index(/^import/) then
 
-					if l.index(/({|\()/)then
+					if l.index(/{|\(/) then
 
 						t = ""
 	
