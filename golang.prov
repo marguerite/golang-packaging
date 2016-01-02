@@ -2,8 +2,15 @@
 
 def prepare()
 
-	specfile = Dir.glob("/home/abuild/rpmbuild/SOURCES/*.spec")[0]
-	#specfile = Dir.glob(`pwd`.gsub(/\n/,'') + "/*.spec")[0]
+	if File.directory?("/usr/src/packages") & File.writable?("/usr/src/packages")
+        	topdir = "/usr/src/packages"
+	else
+        	topdir = ENV["HOME"] + "/rpmbuild"
+	end
+
+	builddir = topdir + "/BUILD"
+	sourcedir = topdir + "/SOURCES"
+	specfile = Dir.glob(sourcedir+ "/*.spec")[0]
 
 	importpath,pkgname,version = "","",""
 
@@ -65,8 +72,7 @@ def prepare()
 
 	end
 
-        build = Dir.glob("/home/abuild/rpmbuild/BUILD/*#{pkgname}*")[0]
-        #build = Dir.glob(`pwd`.gsub(/\n/,'') + "/*#{pkgname}*/")[0]
+        build = Dir.glob(builddir + "/*#{pkgname}*")[0]
 
 	importpath = importpath.gsub(/\/$/,'') if importpath.index(/\/$/)
 

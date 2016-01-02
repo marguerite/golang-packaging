@@ -3,10 +3,15 @@
 
 def find_build_directory()
 
-        path = "/home/abuild/rpmbuild/SOURCES"
-        #path = `pwd`.gsub(/\n/,'')
+        if File.directory?("/usr/src/packages") & File.writable?("/usr/src/packages")
+                topdir = "/usr/src/packages"
+        else
+                topdir = ENV["HOME"] + "/rpmbuild"
+        end
 
-        specfile = Dir.glob(path + "/*.spec")[0]
+	builddir = "/BUILD"
+        sourcedir = "/SOURCES"
+        specfile = Dir.glob(sourcedir + "/*.spec")[0]
 
         pkgname = ""
 
@@ -38,8 +43,7 @@ def find_build_directory()
 
         end
 
-        build = Dir.glob("/home/abuild/rpmbuild/BUILD/*#{pkgname}*")[0]
-        #build = Dir.glob(path + "/*#{pkgname}*")[0]
+        build = Dir.glob(builddir + "/*#{pkgname}*")[0]
 
         return build
 
