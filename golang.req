@@ -90,7 +90,7 @@ def get_imports_list()
 
 	source.each do |g|
 
-		File.open(g,:encoding => "UTF-8") do |f|
+		File.open(g,"r:UTF-8") do |f|
 
 			f.each_line do |l|
 
@@ -98,7 +98,7 @@ def get_imports_list()
 
 				if l.index(/^import/) then
 
-					if l.index(/{|\(/) then
+					if l.index(/\{|\(/) then
 
 						t = ""
 	
@@ -111,7 +111,7 @@ def get_imports_list()
 
 						end
 
-						imports = t.gsub(/(\n|\t)/,'').gsub(/(\)|}).*$/,'').split(/"/)
+						imports = t.gsub(/\n|\t/,'').gsub(/(\)|\}).*$/,'').split(/"/)
 
 						imports.each do |i|
 
