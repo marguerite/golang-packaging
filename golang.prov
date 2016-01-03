@@ -1,51 +1,28 @@
 #!/usr/bin/env ruby
 
-def prepare()
+if File.directory?("/usr/src/packages") & File.writable?("/usr/src/packages")
+        topdir = "/usr/src/packages"
+else
+        topdir = ENV["HOME"] + "/rpmbuild"
+end
 
-	if File.directory?("/usr/src/packages") & File.writable?("/usr/src/packages")
-        	topdir = "/usr/src/packages"
-	else
-        	topdir = ENV["HOME"] + "/rpmbuild"
-	end
+buildroot = Dir.glob(topdir + "/BUILDROOT/*")[0]
+# sometimes buildroot locates in tmppath/name-version-build
+if buildroot == nil
+        buildroot = Dir.glob("/var/tmp/*-build")[0]
+end
+archdir = Dir.glob(buildroot + "/usr/lib*/go/contrib/pkg/*")[0] + "/"
+sourcedir = topdir + "/SOURCES"
+specfile = Dir.glob(sourcedir+ "/*.spec")[0]
+importpath = ""
 
-	builddir = topdir + "/BUILD"
-	sourcedir = topdir + "/SOURCES"
-	specfile = Dir.glob(sourcedir+ "/*.spec")[0]
+File.open(specfile) do |f|
 
-	importpath,pkgname,version = "","",""
-
-	File.open(specfile) do |f|
-
-		f.each_line do |l|
-
-			build_found = 0
-
-			if l.index(/Source(0)?:/) then
-
-				unless l.index("%{name}") then
-
-					pkgname = l.gsub(/Source(0)?:/,'').lstrip!.chomp!.gsub(/^.*\//,'').gsub(/-%.*$/,'')
-
-					build_found = 1
-
-				end
-
-			end
-
-                        if (build_found == 0 && l.index("Name:")) then
-
-                                pkgname = l.gsub(/Name:/,'').lstrip!.chomp!.gsub(/^(go|golang)-/,'')
-
-                        end
-
-                        if l.index("Version:") then
-
-                                version = l.gsub(/Version:/,'').lstrip!.chomp!
-
-                        end
+	f.each_line do |l|
 
 			found = 0
 
+			# see if there's any packager definition for importpath
 			if l.index(/%(define|global)[\s]+(import_path|importpath)/i) then
 
 				importpath = l.gsub(/%(define|global)[\s]+(import_path|importpath)/i,'').lstrip!.chomp!.gsub(/"/,'').gsub(/"/,'')
@@ -54,6 +31,7 @@ def prepare()
 
 			end
 
+			# use the one in "%goprep code.google.com/p/log4go"
 			if (found == 0 && l.index("%goprep")) then 
 
 				importpath = l.gsub(/%goprep/,'').lstrip!.chomp!
@@ -62,76 +40,47 @@ def prepare()
 
 			end
 
+			# sometimes packager didn't package using the macros we give, extract from URL tag
 			if (found == 0 && l.index("Url:")) then
 
-				importpath = l.gsub(/Url\:/,'').lstrip!.chomp!.gsub(/^(http|https)\:\/\//,'')
+				# eg: "URL: https://code.google.com/p/log4go/"
+				# "URL: http://download.fcitx-im.org/fcitx/fcitx"
+
+				# gsub
+				# 1. remove "Url:" then leading whitespace and ending "\n"
+				# 2. remove "http://" or "https://"
+				importpath = l.gsub(/Url:/,'').lstrip!.chomp!.gsub(/^(http|https)\:\/\//,'')
 
 			end
 
-		end
-
 	end
-
-        build = Dir.glob(builddir + "/*#{pkgname}*")[0]
-
-	importpath = importpath.gsub(/\/$/,'') if importpath.index(/\/$/)
-
-	return importpath,build,version
 
 end
 
-def all_dir(dir="",result=nil)
+# code.google.com/p/log4go/, remove the ending "/"
+importpath = importpath.gsub(/\/$/,'') if importpath.index(/\/$/)
 
-	result = [] unless result
-
-	Dir.entries(dir).each do |d|
-
-		unless (d == "." || d == ".." || d.index("example") || d.index("test")) then
-
-                        if File.directory?("#{dir}/#{d}") then
-
-				result << "#{dir}/#{d}" if ! Dir["#{dir}/#{d}/*.go"].empty?
-
-                                all_dir("#{dir}/#{d}",result)
-
-                        end
-
-		end
-
-	end
-
-	return result
-
+# read stdin for filelist rpm feeds us for a (sub) package
+filelist = []
+ARGF.each do |l|
+	# if line has "*.a" or "*.so"
+	# archdir + golang.org/x/text/collate/colltab.a
+	filelist << l.gsub(archdir,'').strip! if l.index(/\.(a|so)\n/)
 end
 
-def get_provides_list()
+# filelist:
+# golang.org/x/text/collate/colltab.a
 
-	importpath = prepare()[0]
+provides = []
 
-	build = prepare()[1]
+unless filelist.empty? then
 
-	version = prepare()[2]
-
-	source,list = [],[]
-
-	# all_dir return strings containing build, replace w/ importpath
-
-	all_dir(build).each do |r|
-
-		source << importpath + r.gsub(build,'')
-
+	filelist.each do |f|
+		provides << "golang(" + f.gsub(".a","") + ")"
 	end
 
-	list << "golang(" + importpath + ") = " + version
-
-	source.each do |s|
-
-		list << "golang(" + s + ") = " + version
-
+	provides.each do |p|
+		puts p	
 	end
-
-	return list
 
 end
-
-puts get_provides_list()
