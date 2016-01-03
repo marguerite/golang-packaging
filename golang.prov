@@ -74,6 +74,8 @@ provides = []
 
 unless filelist.empty? then
 
+	provides << "golang(" + importpath + ")"
+
 	filelist.each do |f|
 		provides << "golang(" + f.gsub(".a","") + ")"
 	end
