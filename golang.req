@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-def find_build_directory()
+def prepare()
 
 	if File.directory?("/usr/src/packages") & File.writable?("/usr/src/packages")
                 topdir = "/usr/src/packages"
@@ -8,43 +8,55 @@ def find_build_directory()
                 topdir = ENV["HOME"] + "/rpmbuild"
         end
 
-	sourcedir = topdir + "/SOURCES"
-	builddir = topdir + "/BUILD"
-	specfile = Dir.glob(sourcedir + "/*.spec")[0]
-
-	pkgname = ""
+	builddir = Dir.glob(topdir + "/BUILD/*")[0]
+	specfile = Dir.glob(topdir + "/SOURCES/*.spec")[0]
+	importpath = ""
 
 	File.open(specfile) do |f|
 
 		f.each_line do |l|
 
-			build_found = 0
+			found = 0
 
-                        if l.index(/Source(0)?:/) then
+			# see if there's any packager definition for importpath
+			if l.index(/%(define|global)[\s]+(import_path|importpath)/i) then
 
-                                unless l.index("%{name}") then
+				importpath = l.gsub(/%(define|global)[\s]+(import_path|importpath)/i,'').lstrip!.chomp!.gsub(/"/,'').gsub(/"/,'')
 
-                                        pkgname = l.gsub(/Source(0)?:/,'').lstrip!.chomp!.gsub(/^.*\//,'').gsub(/-%.*$/,'')
+				found = 1
 
-                                        build_found = 1
+			end
 
-                                end
+			# use the one in "%goprep code.google.com/p/log4go"
+			if (found == 0 && l.index("%goprep")) then 
 
-                        end
+				importpath = l.gsub(/%goprep/,'').lstrip!.chomp!
 
-                        if (build_found == 0 && l.index("Name:")) then
+				found = 1
 
-                                pkgname = l.gsub(/Name:/,'').lstrip!.chomp!.gsub(/^(go|golang)-/,'')
+			end
 
-                        end
+			# sometimes packager didn't package using the macros we give, extract from URL tag
+			if (found == 0 && l.index("Url:")) then
+
+				# eg: "URL: https://code.google.com/p/log4go/"
+				# "URL: http://download.fcitx-im.org/fcitx/fcitx"
+
+				# gsub
+				# 1. remove "Url:" then leading whitespace and ending "\n"
+				# 2. remove "http://" or "https://"
+				importpath = l.gsub(/Url:/,'').lstrip!.chomp!.gsub(/^(http|https)\:\/\//,'')
+
+			end
 
 		end
 
 	end
 
-	build = Dir.glob(builddir + "/*#{pkgname}*")[0]
+	# code.google.com/p/log4go/, remove the ending "/"
+	importpath = importpath.gsub(/\/$/,'') if importpath.index(/\/$/)
 
-	return build
+	return builddir,importpath
 
 end
 
@@ -80,13 +92,13 @@ end
 
 def get_imports_list()
 
-	build = find_build_directory()
+	build = prepare()[0]
+
+	own = prepare()[1]
 
 	source = all_file(build)
 
 	list,importlist = [],[]
-
-	own = `/usr/lib/rpm/golang.prov`.split(/\n/)[0].gsub(/golang\(/,'').gsub(/\)[\s]+=.*/,'')
 
 	source.each do |g|
 

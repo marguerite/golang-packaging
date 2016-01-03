@@ -12,8 +12,7 @@ if buildroot == nil
         buildroot = Dir.glob("/var/tmp/*-build")[0]
 end
 archdir = Dir.glob(buildroot + "/usr/lib*/go/contrib/pkg/*")[0] + "/"
-sourcedir = topdir + "/SOURCES"
-specfile = Dir.glob(sourcedir+ "/*.spec")[0]
+specfile = Dir.glob(topdir+ "/SOURCES/*.spec")[0]
 importpath = ""
 
 File.open(specfile) do |f|
