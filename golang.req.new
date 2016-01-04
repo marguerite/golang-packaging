@@ -64,23 +64,35 @@ filelist = []
 ARGF.each do |l|
 	# if line has "*.a" or "*.so"
 	# archdir + golang.org/x/text/collate/colltab.a
-	filelist << l.strip! if l.index(/\.(a|so)\n/)
+	filelist << l.strip! if ( l.index(/\.a\n$/) && ! l.index(/test|example/) )
 end
 
 # filelist:
-# golang.org/x/text/collate/colltab.a
+# archdir + golang.org/x/text/collate/colltab.a
 
-provides = []
+requires = []
 
 unless filelist.empty? then
 
-	provides << "golang(" + importpath + ")"
+	requires << "golang(API) = 1.5"
 
 	filelist.each do |f|
-		provides << "golang(" + f.gsub(".a","") + ")"
+		# unarchive .a
+		system("ar -x #{f} __.PKGDEF")
+		# read imports
+		File.open("__.PKGDEF","r:UTF-8") do |f1|
+			f1.each do |l|
+				if l.index(/import\s/)
+					# import runtime "runtime"
+					requires << "golang(" + l.strip!.gsub(/"$/,'').gsub(/^.*"/,'') + ")"
+				end
+			end
+		end
+		# clean
+		File.delete("__.PKGDEF")
 	end
 
-	provides.each do |p|
+	requires.each do |p|
 		puts p	
 	end
 
