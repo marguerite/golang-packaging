@@ -2,6 +2,7 @@
 
 require '/usr/lib/rpm/golang/rpmsysinfo.rb'
 include RpmSysinfo
+importpath = RpmSysinfo.get_importpath
 
 # read stdin for filelist rpm feeds us for a (sub) package
 filelist = []
@@ -24,8 +25,8 @@ unless filelist.empty? then
 		File.open("__.PKGDEF","r:UTF-8") do |f1|
 			f1.each do |l|
 				if l.index(/import\s/)
-					# import runtime "runtime"
-					requires << "golang(" + l.strip!.gsub(/"$/,'').gsub(/^.*"/,'') + ")"
+					# import runtime "golang.org/x/net/uniform"
+					requires << "golang(" + l.strip!.gsub(/"$/,'').gsub(/^.*"/,'') + ")" if ( l.index(/(\.com|\.net|\.org|gopkg\.in)/) && ! l.index(importpath) )
 				end
 			end
 		end
