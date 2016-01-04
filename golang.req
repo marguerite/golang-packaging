@@ -1,167 +1,40 @@
 #!/usr/bin/env ruby
 
-def prepare()
+require '/usr/lib/rpm/golang/rpmsysinfo.rb'
+include RpmSysinfo
 
-	if File.directory?("/usr/src/packages") & File.writable?("/usr/src/packages")
-                topdir = "/usr/src/packages"
-        else
-                topdir = ENV["HOME"] + "/rpmbuild"
-        end
-
-	builddir = Dir.glob(topdir + "/BUILD/*")[0]
-	specfile = Dir.glob(topdir + "/SOURCES/*.spec")[0]
-	importpath = ""
-
-	File.open(specfile) do |f|
-
-		f.each_line do |l|
-
-			found = 0
-
-			# see if there's any packager definition for importpath
-			if l.index(/%(define|global)[\s]+(import_path|importpath)/i) then
-
-				importpath = l.gsub(/%(define|global)[\s]+(import_path|importpath)/i,'').lstrip!.chomp!.gsub(/"/,'').gsub(/"/,'')
-
-				found = 1
-
-			end
-
-			# use the one in "%goprep code.google.com/p/log4go"
-			if (found == 0 && l.index("%goprep")) then 
-
-				importpath = l.gsub(/%goprep/,'').lstrip!.chomp!
-
-				found = 1
-
-			end
-
-			# sometimes packager didn't package using the macros we give, extract from URL tag
-			if (found == 0 && l.index("Url:")) then
-
-				# eg: "URL: https://code.google.com/p/log4go/"
-				# "URL: http://download.fcitx-im.org/fcitx/fcitx"
-
-				# gsub
-				# 1. remove "Url:" then leading whitespace and ending "\n"
-				# 2. remove "http://" or "https://"
-				importpath = l.gsub(/Url:/,'').lstrip!.chomp!.gsub(/^(http|https)\:\/\//,'')
-
-			end
-
-		end
-
-	end
-
-	# code.google.com/p/log4go/, remove the ending "/"
-	importpath = importpath.gsub(/\/$/,'') if importpath.index(/\/$/)
-
-	return builddir,importpath
-
+# read stdin for filelist rpm feeds us for a (sub) package
+filelist = []
+ARGF.each do |l|
+	# if line has "*.a" or "*.so"
+	# archdir + golang.org/x/text/collate/colltab.a
+	filelist << l.strip! if ( l.index(/\.a\n$/) && ! l.index(/test|example/) )
 end
 
-def all_file(dir="",result=nil)
+requires = []
 
-	result = [] unless result
+unless filelist.empty? then
 
-	Dir.entries(dir).each do |d|
+	requires << "golang(API) = 1.5"
 
-		unless (d == "." || d == ".." || d.index("example") || d.index("test")) then
-
-			if File.directory?("#{dir}/#{d}") then
-
-				all_file("#{dir}/#{d}",result)
-
-			else
-
-				if ( d.index(/\.go$/) && ! d.index(/(test|example)/) ) then
-
-					result << "#{dir}/#{d}"
-
+	filelist.each do |f|
+		# unarchive .a
+		system("ar -x #{f} __.PKGDEF")
+		# read imports
+		File.open("__.PKGDEF","r:UTF-8") do |f1|
+			f1.each do |l|
+				if l.index(/import\s/)
+					# import runtime "runtime"
+					requires << "golang(" + l.strip!.gsub(/"$/,'').gsub(/^.*"/,'') + ")"
 				end
-
 			end
-
 		end
-
+		# clean
+		File.delete("__.PKGDEF")
 	end
 
-	return result
+	requires.each do |p|
+		puts p	
+	end
 
 end
-
-def get_imports_list()
-
-	build = prepare()[0]
-
-	own = prepare()[1]
-
-	source = all_file(build)
-
-	list,importlist = [],[]
-
-	source.each do |g|
-
-		File.open(g,"r:UTF-8") do |f|
-
-			f.each_line do |l|
-
-				# import should be the first word in a line, or it could be comment
-
-				if l.index(/^import/) then
-
-					if l.index(/\{|\(/) then
-
-						t = ""
-	
-						f.each_line do |l1|
-
-							t = t + l1
-
-							# we don't need that much, just a few lines, not whole text
-							break if l1.index(/\)|\}/)
-
-						end
-
-						imports = t.gsub(/\n|\t/,'').gsub(/(\)|\}).*$/,'').split(/"/)
-
-						imports.each do |i|
-
-							# .com|.net|.org matches all URL, own strips its own url, [\s] (whitespace)
-							# guarantees it doens't match a sentence like comments
-							list << i if ( i.index(/(\.com|\.net|\.org|gopkg\.in)/) && ! i.index(own) && ! i.index(/[\s]/) )
-
-						end
-
-					else
-
-
-						list << l.gsub(/import/,'').gsub(/"/,'').lstrip!.chomp!.gsub(/.*[\s]+/,'') if ( l.index(/(\.com|\.net|\.org)/) && ! l.index(own) )
-
-					end
-
-				end
-
-			end
-
-		end
-
-	end
-
-	unless list == nil then
-
-		list.uniq.each do |l|
-
-			importlist << "golang(" + l + ")"
-
-		end
-
-	end
-
-	importlist << "golang(API) = 1.5"
-
-	return importlist
-
-end
-
-puts get_imports_list()
