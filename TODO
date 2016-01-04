@@ -1,3 +1,5 @@
 # TODO
 
 * implements all kinds of `import`. now we only supports `import ""`, `import { }` and `import ()`.
+* a macro "get_filelist" "get_source_filelist" and related macros
+  to delete item from the list 

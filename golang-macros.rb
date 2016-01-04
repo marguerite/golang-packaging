@@ -191,7 +191,7 @@ elsif ARGV[0] == "--source"
 
 	Find.find($builddir + "/go/src") do |f|
 		unless FileTest.directory?(f)
-			if f.index(".go")
+			if f.index(/\.go$/)
 				puts "Copying " + f
 				FileUtils.chmod_R(0644,f)
 
