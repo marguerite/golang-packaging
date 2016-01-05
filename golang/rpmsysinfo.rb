@@ -12,7 +12,6 @@ module RpmSysinfo
 
         @@buildroot = Dir.glob("/var/tmp/*-build")[0] if @@buildroot == nil
 
-	@@arch = ""
 	# x86_64-(gnu|linux|blabla...)
 	@@rbarch = RUBY_PLATFORM.gsub(/-.*$/,"")
 	# architectures are defined in /usr/lib/rpm/macros
@@ -21,32 +20,26 @@ module RpmSysinfo
 	if @@ix86.include?(@@rbarch)
 		@@libdir = "/usr/lib"
 		@@go_arch = "386"
-		@@arch = "i386"
 	end
 	if @@rbarch == "x86_64"
         	@@libdir = "/usr/lib64"
         	@@go_arch = "amd64"
-		@@arch = @@rbarch
 	end
 	if @@arm.include?(@@rbarch)
         	@@libdir = "/usr/lib"
         	@@go_arch = "arm"
-		@@arch = @@rbarch
 	end
 	if @@rbarch == "aarch64"
 		@@libdir = "/usr/lib64"
 		@@go_arch = "arm64"
-		@@arch = @@rbarch
 	end
 	if @@rbarch == "ppc64"
 		@@libdir = "/usr/lib64"
 		@@go_arch = "ppc64"
-		@@arch = @@rbarch
 	end
 	if @@rbarch == "ppc64le"
 		@@libdir = "/usr/lib64"
 		@@go_arch = "ppc64le"
-		@@arch = @@rbarch
 	end
 
 	def self.set_topdir(top)
@@ -79,33 +72,33 @@ module RpmSysinfo
 
 	end
 
-	def self.get_arch
+	def self.get_go_arch
 
 		return @@go_arch
 
 	end
 
-	def self.get_contribdir
+	def self.get_go_contribdir
 
 		go_contribdir = @@libdir + "/go/contrib/pkg/linux_" + @@go_arch
 		return go_contribdir
 
 	end
 
-	def self.get_tooldir
+	def self.get_go_tooldir
 
 		go_tooldir = "/usr/share/go/pkg/tool/linux_" + @@go_arch
 		return go_tooldir
 
 	end
 
-	def self.get_contribsrcdir
+	def self.get_go_contribsrcdir
 
 		return "/usr/share/go/contrib/src"
 	
 	end
 
-	def self.get_importpath
+	def self.get_go_importpath
 
 		importpath = ""
 

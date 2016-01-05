@@ -11,10 +11,10 @@ include RpmSysinfo
 $builddir = RpmSysinfo.get_builddir
 $buildroot = RpmSysinfo.get_buildroot
 $libdir = RpmSysinfo.get_libdir
-$go_arch = RpmSysinfo.get_arch
-$go_contribdir = RpmSysinfo.get_contribdir
-$go_contribsrcdir = RpmSysinfo.get_contribsrcdir
-$go_tooldir = RpmSysinfo.get_tooldir
+$go_arch = RpmSysinfo.get_go_arch
+$go_contribdir = RpmSysinfo.get_go_contribdir
+$go_contribsrcdir = RpmSysinfo.get_go_contribsrcdir
+$go_tooldir = RpmSysinfo.get_go_tooldir
 
 # ARGV[0], the called method itself
 if ARGV[0] == "--prep"

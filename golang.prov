@@ -4,8 +4,8 @@ require '/usr/lib/rpm/golang/rpmsysinfo.rb'
 include RpmSysinfo
 
 buildroot = RpmSysinfo.get_buildroot
-contribdir = RpmSysinfo.get_contribdir
-importpath = RpmSysinfo.get_importpath
+contribdir = RpmSysinfo.get_go_contribdir
+importpath = RpmSysinfo.get_go_importpath
 
 # read stdin for filelist rpm feeds us for a (sub) package
 filelist = []
