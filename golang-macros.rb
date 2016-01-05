@@ -3,12 +3,16 @@
 require 'fileutils'
 require 'securerandom'
 require 'find'
+# needs to be called directly to adjust GOARCH when packaging
 if File.exists?("/usr/lib/rpm/golang/rpmsysinfo.rb")
 	require '/usr/lib/rpm/golang/rpmsysinfo.rb'
+	require '/usr/lib/rpm/golang/opts.rb'
 else
 	require File.join(File.dirname(__FILE__),'golang/rpmsysinfo.rb')
+	require File.join(File.dirname(__FILE__),'golang/opts.rb')
 end
 include RpmSysinfo
+include Opts
 
 # GLOBAL RPM MACROS
 
@@ -85,32 +89,32 @@ elsif ARGV[0] == "--build"
 
 	# ARGV[0] is "--build" itself, there can be "--with-buildid" or "--shared"
         # all else are treated as MODs
-	mods = ARGV
-	mods.delete_at(0) # drop "--build"
-	sharedflags = ""
-	buildidflags = ""
+	opts = Opts.get[0]
+	opts.delete_at(0) # drop "--build"
+	mods = Opts.get[1]
+	extraflags = ""
 
-	if mods.include?("--shared")
-		sharedflags = "-buildmode=shared -linkshared"
-		mods.delete("--shared")
+	if opts.include?("--with-buildid")
+		buildid = "0x" + SecureRandom.hex(20)
+		# whitespace is important!
+		extraflags = extraflags + ' -ldflags "-B ' + buildid + '"'
+		opts.delete("--with-buildid")
 	end
 
-	if mods.include?("--with-buildid")
-		buildid = "0x" + SecureRandom.hex(20)
-		buildidflags = '-ldflags "-B ' + buildid + '"'
-		mods.delete("--with-buildid")
+	opts.each do |o|
+		extraflags = extraflags + " #{o}"
 	end
 
 	# MODs: nil, "...", "/...", "foo...", "foo/...", "foo bar", "foo bar... baz" and etc
 	if mods.empty?
-		system("GOPATH=\"#{gopath}\" GOBIN=\"#{gobin}\" go install #{sharedflags} #{buildidflags} #{buildflags} #{importpath}")	
+		system("GOPATH=\"#{gopath}\" GOBIN=\"#{gobin}\" go install #{extraflags} #{buildflags} #{importpath}")	
 	else
 		for mod in mods do
 			if mod == "..."
-				system("GOPATH=\"#{gopath}\" GOBIN=\"#{gobin}\" go install #{sharedflags} #{buildidflags} #{buildflags} #{importpath}...")
+				system("GOPATH=\"#{gopath}\" GOBIN=\"#{gobin}\" go install #{extraflags} #{buildflags} #{importpath}...")
 				break
 			else
-				system("GOPATH=\"#{gopath}\" GOBIN=\"#{gobin}\" go install #{sharedflags} #{buildidflags} #{buildflags} #{importpath}/#{mod}")
+				system("GOPATH=\"#{gopath}\" GOBIN=\"#{gobin}\" go install #{extraflags} #{buildflags} #{importpath}/#{mod}")
 			end
 		end
 	end

@@ -7,9 +7,8 @@
   * golang-macros.rb:
     + support build with fake build id
     + support build with custom tags (github#7)
-    + support build with shared flags
     + support pass any -<arg>="a b c" or -<arg>=<value>
-      to go install
+      to go install, shared build is possible now
     + --filelist, to generate filelist used in %files
       section
     + use popen3 to break the script when build fails (github#6)
