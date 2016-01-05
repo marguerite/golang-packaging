@@ -11,7 +11,7 @@ filelist = []
 ARGF.each do |l|
 	# if line has "*.a" or "*.so"
 	# archdir + golang.org/x/text/collate/colltab.a
-	filelist << l.gsub(archdir,'').strip! if (l.index(/\.(a|so)\n/) && ! l.index(/example|test/))
+	filelist << l.gsub(archdir,'').strip! if ( l.index(/\.(a|so)\n/) && ! l.gsub(importpath,'').index(/example|test/) )
 end
 
 # filelist:
