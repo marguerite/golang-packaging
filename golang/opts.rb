@@ -1,14 +1,12 @@
 module Opts
 
-	@@inputs = ['-buildmode=shared','-linkshared','--cflags="a b c"','--with-buildid','-tags','tag','a','b...']
-
-	#@@inputs = ARGV
+	@@inputs = ARGV
 
 	@@opts, @@mods = [], []
 
 	def self.get
 
-		# ARGV: -buildmode=shared -linkshared -cflags="a b c" --with-buildid -tags tag d e...
+		# ARGV: -buildmode=shared -linkshared -cflags="a b c" --with-buildid -tag tag d e...
 		@@inputs.each do |i|
 
 			# options begin with "-"
@@ -42,4 +40,3 @@ module Opts
 
 end
 
-puts Opts.get

@@ -1,3 +1,40 @@
+== update version 14 ==
+
+  * if importpath has "test/example", it should survive (github#5)
+  * merge macros.go from openSUSE's go here
+  * add golang-macros.rb, replacement for the complicated
+    macros in shell in macros.go
+  * golang-macros.rb:
+    + support build with fake build id
+    + support build with custom tags (github#7)
+    + support build with shared flags
+    + support pass any -<arg>="a b c" or -<arg>=<value>
+      to go install
+    + --filelist, to generate filelist used in %files
+      section
+    + use popen3 to break the script when build fails (github#6)
+
+== update version 13 ==
+
+  * provides the importpath itself
+  * fix regex not to check files like .golden in -source
+  * filter "test/example" from Provides
+  * split common stuff to a module golang/rpmsysinfo.rb
+  * rewrite golang.req, now read from stdin RPM feeds, and check __.PKGDEF from .a files for "import"s. (github#3 github#4）
+
+== update version 12 ==
+
+  * rewrite golang.prov. it should take filelist feeded by rpm in case not to add provides for source/debuginfo/debugsource sub-packages
+  * simply golang.req: own is actually importpath, no need to call golang.prov again
+
+== update version 11 ==
+
+  * support SLE11
+
+== update version 10 ==
+
+  * support all archtectures like ppc/arm
+
 == update version 9 ==
 
   * update golang(API) to 1.5

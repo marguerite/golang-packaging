@@ -7,7 +7,7 @@
 
 
 %go_ver         %(LC_ALL=C rpm -q --qf '%%{epoch}:%%{version}\\n' go | sed -e 's/(none)://' -e 's/ 0:/ /' | grep -v "is not")
-%go_arch        GOARCH
+%go_arch	GOARCH
 %go_build_ver   %(go version | sed 's/^go version //' | sed 's:\/::g' | tr -d ' ' | cut -c 1-7 )
 %go_api_ver %(echo %{go_ver} | sed 's/\.[0-9]$//')
 
@@ -34,7 +34,7 @@ Provides:       %{name}-devel-static = %{version}
 # Prepare the expected Go package build environement.
 # We need a $GOPATH: go help gopath
 # We need a valid importpath: go help packages
-%goprep /usr/lib/rpm/golang-macros.rb --prep
+%goprep %{_prefix}/lib/rpm/golang-macros.rb --prep
 
 # %%gobuild macro actually performs the command "go install", but the go
 # toolchain will install to the $GOPATH which allows us then customise the final
@@ -84,16 +84,16 @@ Provides:       %{name}-devel-static = %{version}
 #              go install importpath/baz
 #
 # See: go help install, go help packages
-%gobuild /usr/lib/rpm/golang-macros.rb --build 
+%gobuild %{_prefix}/lib/rpm/golang-macros.rb --build 
 
 # Install all compiled packages and binaries to the buildroot
-%goinstall /usr/lib/rpm/golang-macros.rb --install
+%goinstall %{_prefix}/lib/rpm/golang-macros.rb --install
 
-%gofix /usr/lib/rpm/golang-macros.rb --fix
+%gofix %{_prefix}/lib/rpm/golang-macros.rb --fix
 
-%gotest /usr/lib/rpm/golang-macros.rb --test
+%gotest %{_prefix}/lib/rpm/golang-macros.rb --test
 
-%gosrc /usr/lib/rpm/golang-macros.rb --source
+%gosrc %{_prefix}/lib/rpm/golang-macros.rb --source
 
 # Template for source sub-package
 %gosrc_package(n:r:) \

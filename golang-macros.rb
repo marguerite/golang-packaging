@@ -3,11 +3,10 @@
 require 'fileutils'
 require 'securerandom'
 require 'find'
-# make it installable separately
-if Dir.exists?("/usr/lib/rpm/golang")
+if File.exists?("/usr/lib/rpm/golang/rpmsysinfo.rb")
 	require '/usr/lib/rpm/golang/rpmsysinfo.rb'
 else
-
+	require File.join(File.dirname(__FILE__),'golang/rpmsysinfo.rb')
 end
 include RpmSysinfo
 
@@ -22,7 +21,11 @@ $go_contribsrcdir = RpmSysinfo.get_go_contribsrcdir
 $go_tooldir = RpmSysinfo.get_go_tooldir
 
 # ARGV[0], the called method itself
-if ARGV[0] == "--prep"
+if ARGV[0] == "--arch"
+
+	puts $go_arch
+
+elsif ARGV[0] == "--prep"
 
 	puts "Preparation Stage:\n"
 
