@@ -12,10 +12,42 @@ module RpmSysinfo
 
         @@buildroot = Dir.glob("/var/tmp/*-build")[0] if @@buildroot == nil
 
-	@@archdir = Dir.glob(@@buildroot + "/usr/lib*/go/contrib/pkg/*")[0] + "/"
-
-	@@specfile = Dir.glob(@@topdir+ "/SOURCES/*.spec")[0]
-
+	@@arch = ""
+	# x86_64-(gnu|linux|blabla...)
+	@@rbarch = RUBY_PLATFORM.gsub(/-.*$/,"")
+	# architectures are defined in /usr/lib/rpm/macros
+	@@ix86 = ["i386","i486","i586","i686","pentium3","pentium4","athlon","geode"]
+	@@arm = ["armv3l","armv4b","armv4l","armv4tl","armv5b","armv5l","armv5teb","armv5tel","armv5tejl","armv6l","armv6hl","armv7l","armv7hl","armv7hnl"]
+	if @@ix86.include?(@@rbarch)
+		@@libdir = "/usr/lib"
+		@@go_arch = "386"
+		@@arch = "i386"
+	end
+	if @@rbarch == "x86_64"
+        	@@libdir = "/usr/lib64"
+        	@@go_arch = "amd64"
+		@@arch = @@rbarch
+	end
+	if @@arm.include?(@@rbarch)
+        	@@libdir = "/usr/lib"
+        	@@go_arch = "arm"
+		@@arch = @@rbarch
+	end
+	if @@rbarch == "aarch64"
+		@@libdir = "/usr/lib64"
+		@@go_arch = "arm64"
+		@@arch = @@rbarch
+	end
+	if @@rbarch == "ppc64"
+		@@libdir = "/usr/lib64"
+		@@go_arch = "ppc64"
+		@@arch = @@rbarch
+	end
+	if @@rbarch == "ppc64le"
+		@@libdir = "/usr/lib64"
+		@@go_arch = "ppc64le"
+		@@arch = @@rbarch
+	end
 
 	def self.set_topdir(top)
 
@@ -29,23 +61,57 @@ module RpmSysinfo
 
 	end
 
+	def self.get_builddir
+
+		return @@topdir + "/BUILD"
+
+	end
+
 	def self.get_buildroot
 
 		return @@buildroot
 
 	end
 
-	def self.get_archdir
+	def self.get_libdir
 
-		return @@archdir
+		return @@libdir
 
+	end
+
+	def self.get_arch
+
+		return @@go_arch
+
+	end
+
+	def self.get_contribdir
+
+		go_contribdir = @@libdir + "/go/contrib/pkg/linux_" + @@go_arch
+		return go_contribdir
+
+	end
+
+	def self.get_tooldir
+
+		go_tooldir = "/usr/share/go/pkg/tool/linux_" + @@go_arch
+		return go_tooldir
+
+	end
+
+	def self.get_contribsrcdir
+
+		return "/usr/share/go/contrib/src"
+	
 	end
 
 	def self.get_importpath
 
 		importpath = ""
 
-                File.open(@@specfile) do |f|
+		specfile = Dir.glob(@@topdir + "/SOURCES/*.spec")[0]
+
+                File.open(specfile) do |f|
 
                         f.each_line do |l|
 

@@ -3,15 +3,16 @@
 require '/usr/lib/rpm/golang/rpmsysinfo.rb'
 include RpmSysinfo
 
-archdir = RpmSysinfo.get_archdir
+buildroot = RpmSysinfo.get_buildroot
+contribdir = RpmSysinfo.get_contribdir
 importpath = RpmSysinfo.get_importpath
 
 # read stdin for filelist rpm feeds us for a (sub) package
 filelist = []
 ARGF.each do |l|
-	# if line has "*.a" or "*.so"
-	# archdir + golang.org/x/text/collate/colltab.a
-	filelist << l.gsub(archdir,'').strip! if ( l.index(/\.(a|so)\n/) && ! l.gsub(importpath,'').index(/example|test/) )
+	# if line has "*.a"
+	# buildroot + contribdir + golang.org/x/text/collate/colltab.a
+	filelist << l.gsub(buildroot + contribdir,'').strip! if ( l.index(/\.a\n/) && ! l.gsub(importpath,'').index(/example|test/) )
 end
 
 # filelist:

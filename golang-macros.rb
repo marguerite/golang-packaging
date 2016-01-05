@@ -3,67 +3,18 @@
 require 'fileutils'
 require 'securerandom'
 require 'find'
+require '/usr/lib/rpm/golang/rpmsysinfo.rb'
+include RpmSysinfo
 
 # GLOBAL RPM MACROS
-if File.directory?("/usr/src/packages") & File.writable?("/usr/src/packages")
-	$topdir = "/usr/src/packages"
-else
-	$topdir = ENV["HOME"] + "/rpmbuild"
-end
 
-$builddir = $topdir + "/BUILD"
-$buildrootdir = $topdir + "/BUILDROOT"
-$bindir = "/usr/bin"
-$datadir = "/usr/share"
-
-$arch = ""
-# x86_64-(gnu|linux|blabla...)
-$rbarch = RUBY_PLATFORM.gsub(/-.*$/,"")
-# architectures are defined in /usr/lib/rpm/macros
-ix86 = ["i386","i486","i586","i686","pentium3","pentium4","athlon","geode"]
-arm = ["armv3l","armv4b","armv4l","armv4tl","armv5b","armv5l","armv5teb","armv5tel","armv5tejl","armv6l","armv6hl","armv7l","armv7hl","armv7hnl"]
-if ix86.include?($rbarch)
-	$libdir = "/usr/lib"
-	$go_arch = "386"
-	$arch = "i386"
-end
-if $rbarch == "x86_64"
-        $libdir = "/usr/lib64"
-        $go_arch = "amd64"
-	$arch = $rbarch
-end
-if arm.include?($rbarch)
-        $libdir = "/usr/lib"
-        $go_arch = "arm"
-	$arch = $rbarch
-end
-if $rbarch == "aarch64"
-	$libdir = "/usr/lib64"
-	$go_arch = "arm64"
-	$arch = $rbarch
-end
-if $rbarch == "ppc64"
-	$libdir = "/usr/lib64"
-	$go_arch = "ppc64"
-	$arch = $rbarch
-end
-if $rbarch == "ppc64le"
-	$libdir = "/usr/lib64"
-	$go_arch = "ppc64le"
-	$arch = $rbarch
-end
-
-# we don't need to create buildroot which is $buildrootdir/%{name}-%{version}-%{release}.%{_arch},
-# we just find the only directory under $buildrootdir
-$buildroot = Dir.glob($buildrootdir + "/*." + $arch)[0]
-# sometimes buildroot locates in tmppath/name-version-build
-if $buildroot == nil
-	$buildroot = Dir.glob("/var/tmp/*-build")[0]
-end
-
-$go_contribdir = $libdir + "/go/contrib/pkg/linux_" + $go_arch
-$go_contribsrcdir = $datadir + "/go/contrib/src"
-$go_tooldir = $datadir + "/go/pkg/tool/linux_" + $go_arch
+$builddir = RpmSysinfo.get_builddir
+$buildroot = RpmSysinfo.get_buildroot
+$libdir = RpmSysinfo.get_libdir
+$go_arch = RpmSysinfo.get_arch
+$go_contribdir = RpmSysinfo.get_contribdir
+$go_contribsrcdir = RpmSysinfo.get_contribsrcdir
+$go_tooldir = RpmSysinfo.get_tooldir
 
 # ARGV[0], the called method itself
 if ARGV[0] == "--prep"
@@ -101,8 +52,8 @@ if ARGV[0] == "--prep"
 		puts "Files are moved!\n"
 
 		# create target directories
-		puts "Creating directory for binaries " + $buildroot + $bindir + "\n"  
-		FileUtils.mkdir_p($buildroot + $bindir)
+		puts "Creating directory for binaries " + $buildroot + "/usr/bin" + "\n"  
+		FileUtils.mkdir_p($buildroot + "/usr/bin")
 		puts "Creating directory for contrib " + $buildroot + $go_contribdir + "\n"	
 		FileUtils.mkdir_p($buildroot + $go_contribdir)
 		puts "Creating directory for source " + $buildroot + $go_contribsrcdir + "\n"
@@ -172,11 +123,11 @@ elsif ARGV[0] == "--install"
 	end
 
 	unless Dir["#{$builddir}/go/bin/*"].empty?
-		puts "Copyig binaries to " + $buildroot + $bindir
+		puts "Copyig binaries to " + $buildroot + "/usr/bin"
 		Dir.glob($builddir + "/go/bin/*").each do |f|
 			puts "Copying " + f
 			FileUtils.chmod_R(0755,f)
-			FileUtils.cp_r(f,$buildroot + $bindir)
+			FileUtils.cp_r(f,$buildroot + "/usr/bin")
 		end
 		puts "Done!"
 	end
