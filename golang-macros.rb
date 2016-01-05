@@ -3,7 +3,12 @@
 require 'fileutils'
 require 'securerandom'
 require 'find'
-require '/usr/lib/rpm/golang/rpmsysinfo.rb'
+# make it installable separately
+if Dir.exists?("/usr/lib/rpm/golang")
+	require '/usr/lib/rpm/golang/rpmsysinfo.rb'
+else
+
+end
 include RpmSysinfo
 
 # GLOBAL RPM MACROS
@@ -187,6 +192,11 @@ elsif ARGV[0] == "--test"
 	end
 
 	puts "Test passed!"
+
+# generate filelist for go_contribdir go_contribdir_dir
+elsif ARGV[0] == "--filelist"
+
+
 
 else
 
