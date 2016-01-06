@@ -89,20 +89,21 @@ elsif ARGV[0] == "--build"
 
 	# ARGV[0] is "--build" itself, there can be "--with-buildid" or "--shared"
         # all else are treated as MODs
-	opts = Opts.get[0]
-	opts.delete_at(0) # drop "--build"
-	mods = Opts.get[1]
+	opts = Opts.get_opts
+	mods = Opts.get_mods
 	extraflags = ""
 
-	if opts.include?("--with-buildid")
-		buildid = "0x" + SecureRandom.hex(20)
-		# whitespace is important!
-		extraflags = extraflags + ' -ldflags "-B ' + buildid + '"'
-		opts.delete("--with-buildid")
-	end
+	unless opts.length == 1
+		if opts.include?("--with-buildid")
+			buildid = "0x" + SecureRandom.hex(20)
+			# whitespace is important!
+			extraflags = extraflags + ' -ldflags "-B ' + buildid + '"'
+			opts.delete("--with-buildid")
+		end
 
-	opts.each do |o|
-		extraflags = extraflags + " #{o}"
+		opts.each do |o|
+			extraflags = extraflags + " #{o}"
+		end
 	end
 
 	# MODs: nil, "...", "/...", "foo...", "foo/...", "foo bar", "foo bar... baz" and etc
