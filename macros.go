@@ -95,6 +95,8 @@ Provides:       %{name}-devel-static = %{version}
 
 %gosrc %{_prefix}/lib/rpm/golang-macros.rb --source
 
+%go_filelist %{_prefix}/lib/rpm/golang-macros.rb --filelist
+
 # Template for source sub-package
 %gosrc_package(n:r:) \
 %package %{-n:-n %{-n*}-}source \

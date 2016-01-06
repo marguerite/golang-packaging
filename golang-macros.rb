@@ -3,16 +3,12 @@
 require 'fileutils'
 require 'securerandom'
 require 'find'
-# needs to be called directly to adjust GOARCH when packaging
-if File.exists?("/usr/lib/rpm/golang/rpmsysinfo.rb")
-	require '/usr/lib/rpm/golang/rpmsysinfo.rb'
-	require '/usr/lib/rpm/golang/opts.rb'
-else
-	require File.join(File.dirname(__FILE__),'golang/rpmsysinfo.rb')
-	require File.join(File.dirname(__FILE__),'golang/opts.rb')
-end
+require File.join(File.dirname(__FILE__),'golang/rpmsysinfo.rb')
+require File.join(File.dirname(__FILE__),'golang/opts.rb')
+require File.join(File.dirname(__FILE__),'golang/filelists.rb')
 include RpmSysinfo
 include Opts
+include Filelists
 
 # GLOBAL RPM MACROS
 
@@ -204,7 +200,34 @@ elsif ARGV[0] == "--test"
 # generate filelist for go_contribdir go_contribdir_dir
 elsif ARGV[0] == "--filelist"
 
+	puts "Processing filelists..."
 
+	opts = Opts.get_opts
+	excludes = Opts.get_mods
+	# [0] is BUILD/go
+	build = Dir.glob($builddir + "/*")[1]
+
+	# find shared build from linux_amd64_dynlink
+	if opts.include?("--shared")
+		Filelists.new($buildroot + $go_contribdir + "_dynlink", build + "/shared.lst")
+		Filelists.new($buildroot + "/usr/bin", build + "/shared.lst")
+		Filelists.new($buildroot + $go_tooldir,build + "/shared.lst")
+	# process for -source sub-package
+	elsif opts.include?("--source")
+		Filelists.new($buildroot + $go_contribsrcdir, build + "/source.lst")
+	# default for main package, static build
+	else
+		Filelists.new($buildroot + $go_contribdir,build + "/file.lst")
+		Filelists.new($buildroot + "/usr/bin", build + "/file.lst")
+		Filelists.new($buildroot + $go_tooldir,build + "/file.lst")
+	end
+
+	# handle excludes
+	if opts.include?("--exclude")
+
+	end
+
+	puts "Filelists created!"
 
 else
 
