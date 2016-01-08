@@ -204,22 +204,23 @@ elsif ARGV[0] == "--filelist"
 
 	opts = Opts.get_opts
 	excludes = Opts.get_mods
-	# [0] is BUILD/go
-	build = Dir.glob($builddir + "/*")[1]
+	# two directories, one is /BUILD/go. reject it, returns array with 1 element.
+	builddirs = Dir.glob($builddir + "/*").reject! { |f| f == $builddir + "/go" }
+	builddir = builddirs[0]
 
 	# find shared build from linux_amd64_dynlink
 	if opts.include?("--shared")
-		Filelists.new($buildroot + $go_contribdir + "_dynlink", build + "/shared.lst")
-		Filelists.new($buildroot + "/usr/bin", build + "/shared.lst")
-		Filelists.new($buildroot + $go_tooldir,build + "/shared.lst")
+		Filelists.new($buildroot + $go_contribdir + "_dynlink", builddir + "/shared.lst")
+		Filelists.new($buildroot + "/usr/bin", builddir + "/shared.lst")
+		Filelists.new($buildroot + $go_tooldir,builddir + "/shared.lst")
 	# process for -source sub-package
 	elsif opts.include?("--source")
-		Filelists.new($buildroot + $go_contribsrcdir, build + "/source.lst")
+		Filelists.new($buildroot + $go_contribsrcdir, builddir + "/source.lst")
 	# default for main package, static build
 	else
-		Filelists.new($buildroot + $go_contribdir,build + "/file.lst")
-		Filelists.new($buildroot + "/usr/bin", build + "/file.lst")
-		Filelists.new($buildroot + $go_tooldir,build + "/file.lst")
+		Filelists.new($buildroot + $go_contribdir,builddir + "/file.lst")
+		Filelists.new($buildroot + "/usr/bin", builddir + "/file.lst")
+		Filelists.new($buildroot + $go_tooldir,builddir + "/file.lst")
 	end
 
 	# handle excludes
