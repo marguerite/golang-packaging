@@ -12,3 +12,7 @@ you automatically. You can also say
 >  BuildRequires: golang(xxx) 
 
 in specifications for packages built with golang-packaging.
+
+# Macros explained
+
+https://en.opensuse.org/openSUSE:Packaging_Go

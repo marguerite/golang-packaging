@@ -1,6 +1,7 @@
 module Filelists
 
 	require 'find'
+	require 'fileutils'
 	require File.join(File.dirname(__FILE__),'rpmsysinfo.rb')
 	include RpmSysinfo
 
@@ -9,10 +10,13 @@ module Filelists
 	@@contribsrcdir = RpmSysinfo.get_go_contribsrcdir
 	@@tooldir = RpmSysinfo.get_go_tooldir
 	@@bindir = "/usr/bin"
+	@@outfile = ""
 
 	def self.new(path,outfile)
 
-		File.open(outfile,"a:UTF-8") do |f|
+		@@outfile = outfile
+
+		File.open(@@outfile,"a:UTF-8") do |f|
 
 			Find.find(path) do |f1|
 
@@ -33,6 +37,49 @@ module Filelists
 			end			
 
 		end
+
+	end
+
+	def exclude(infile=@@outfile,excludes=[])
+
+        	# treat excludes as regex array, eg:
+        	# ["/usr/bin/*","/usr/lib/debug/*"]
+		if excludes == nil
+			a = Array.new
+		else
+			a = excludes.split("\s")
+		end
+
+        	# expand the regex to actual file
+        	list = Array.new
+        	a.each do |i|
+
+                	Dir.glob(@@buildroot + i) do |f|
+
+                        	list << f.gsub(@@buildroot,"")
+
+                	end
+
+        	end
+
+		# delete the files excluded from buildroot
+		list.each { |f| File.delete(@@buildroot + f) }
+
+        	File.open(infile,"r:UTF-8") do |f|
+
+                	File.open(infile + ".new","w:UTF-8") do |f1|
+
+                        	f.each_line do |l|
+
+                                	f1.puts(l) unless list.include?(l.chomp!)
+
+                        	end
+
+                	end
+
+        	end
+
+		FileUtils.mv(infile + ".new",infile)
 
 	end
 

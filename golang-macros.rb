@@ -203,7 +203,7 @@ elsif ARGV[0] == "--filelist"
 	puts "Processing filelists..."
 
 	opts = Opts.get_opts
-	excludes = Opts.get_mods
+	excludes = Opts.get_mods[0]
 	# two directories, one is /BUILD/go. reject it, returns array with 1 element.
 	builddirs = Dir.glob($builddir + "/*").reject! { |f| f == $builddir + "/go" }
 	builddir = builddirs[0]
@@ -213,19 +213,17 @@ elsif ARGV[0] == "--filelist"
 		Filelists.new($buildroot + $go_contribdir + "_dynlink", builddir + "/shared.lst")
 		Filelists.new($buildroot + "/usr/bin", builddir + "/shared.lst")
 		Filelists.new($buildroot + $go_tooldir,builddir + "/shared.lst")
+		Filelists.exclude(builddir + "/shared.lst",excludes)
 	# process for -source sub-package
 	elsif opts.include?("--source")
 		Filelists.new($buildroot + $go_contribsrcdir, builddir + "/source.lst")
+		Filelists.exclude(builddir + "/source.lst",excludes)
 	# default for main package, static build
 	else
 		Filelists.new($buildroot + $go_contribdir,builddir + "/file.lst")
 		Filelists.new($buildroot + "/usr/bin", builddir + "/file.lst")
 		Filelists.new($buildroot + $go_tooldir,builddir + "/file.lst")
-	end
-
-	# handle excludes
-	if opts.include?("--exclude")
-
+		Filelists.exclude(builddir + "/file.lst",excludes)
 	end
 
 	puts "Filelists created!"
