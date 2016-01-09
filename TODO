@@ -1,4 +1,3 @@
 # TODO
 
 * implements all kinds of `import`. now we only supports `import ""`, `import { }` and `import ()`.
-* macro to exclude files from generated filelist
