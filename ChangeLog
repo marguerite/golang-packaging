@@ -9,9 +9,11 @@
     + support build with custom tags (github#7)
     + support pass any -<arg>="a b c" or -<arg>=<value>
       to go install, shared build is possible now
+      (not fully support, other macros need to be adapted)
     + --filelist, to generate filelist used in %files
-      section
-    + use popen3 to break the script when build fails (github#6)
+      section with excluding support
+    + use IO.popen to break the build at the exact place
+      it fails (github#6)
 
 == update version 13 ==
 
