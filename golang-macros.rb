@@ -85,13 +85,11 @@ elsif ARGV[0] == "--build"
 	# get importpath from /tmp/importpath.txt saved by prep()
 	importpath = open("/tmp/importpath.txt","r").gets.strip!
 
-	# ARGV[0] is "--build" itself, there can be "--with-buildid" or "--shared"
-        # all else are treated as MODs
 	opts = Opts.get_opts
 	mods = Opts.get_mods
 	extraflags = ""
 
-	unless opts.length == 1
+	unless opts.empty?
 		if opts.include?("--with-buildid")
 			buildid = "0x" + SecureRandom.hex(20)
 			# whitespace is important!

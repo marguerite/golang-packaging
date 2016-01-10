@@ -10,11 +10,11 @@ module Opts
 		# options begin with "-"
 		if i.index(/^-/)
 
-			if i.index("-tag")
+			if i.index("-tags")
 
 				# the following ARG is actually for -tag, not the main script
 
-				@@opts << i + " " + @@inputs[@@inputs.index(i) + 1]
+				@@opts << i + "\s"+ @@inputs[@@inputs.index(i) + 1]
 
 				@@inputs.delete_at(@@inputs.index(i) + 1)
 
@@ -34,7 +34,12 @@ module Opts
 
 	def self.get_opts		
 
-		return @@opts
+		# remove the first opt which is "--build, --prep" and etc
+		if @@opts.length > 1
+			return @@opts.reject! {|f| f == ARGV[0] }
+		else
+			return []
+		end
 
 	end
 
