@@ -2,6 +2,9 @@ module CLI
 
 	def self.run(command="")
 
+		# echo the command we run to the buildlog
+		puts command
+
 		IO.popen(command) {|f| f.each_line {|l| puts l}}
 
 		if $? == 0
