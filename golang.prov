@@ -12,7 +12,7 @@ filelist = []
 ARGF.each do |l|
 	# if line has "*.a"
 	# buildroot + contribdir + golang.org/x/text/collate/colltab.a
-	filelist << l.gsub(buildroot + contribdir,'').strip! if ( l.index(/\.a\n/) && ! l.gsub(importpath,'').index(/example|test/) )
+	filelist << l.gsub(buildroot + contribdir + "/",'').strip! if ( l.index(/\.a\n/) && ! l.gsub(importpath,'').index(/example|test/) )
 end
 
 # filelist:
@@ -28,7 +28,7 @@ unless filelist.empty? then
 		provides << "golang(" + f.gsub(".a","") + ")"
 	end
 
-	provides.each do |p|
+	provides.uniq!.each do |p|
 		puts p	
 	end
 

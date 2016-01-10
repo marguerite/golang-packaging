@@ -147,8 +147,6 @@ module RpmSysinfo
 
                 # code.google.com/p/log4go/, remove the ending "/"
                 importpath = importpath.gsub(/\/$/,'') if importpath.index(/\/$/)
-
-		p importpath
      
                 return importpath
         
