@@ -6,9 +6,11 @@ require 'find'
 require File.join(File.dirname(__FILE__),'golang/rpmsysinfo.rb')
 require File.join(File.dirname(__FILE__),'golang/opts.rb')
 require File.join(File.dirname(__FILE__),'golang/filelists.rb')
+require File.join(File.dirname(__FILE__),'golang/cli.rb')
 include RpmSysinfo
 include Opts
 include Filelists
+include CLI
 
 # GLOBAL RPM MACROS
 
@@ -104,14 +106,14 @@ elsif ARGV[0] == "--build"
 
 	# MODs: nil, "...", "/...", "foo...", "foo/...", "foo bar", "foo bar... baz" and etc
 	if mods.empty?
-		system("GOPATH=\"#{gopath}\" GOBIN=\"#{gobin}\" go install #{extraflags} #{buildflags} #{importpath}")	
+		CLI.run("GOPATH=\"#{gopath}\" GOBIN=\"#{gobin}\" go install #{extraflags} #{buildflags} #{importpath}")	
 	else
 		for mod in mods do
 			if mod == "..."
-				system("GOPATH=\"#{gopath}\" GOBIN=\"#{gobin}\" go install #{extraflags} #{buildflags} #{importpath}...")
+				CLI.run("GOPATH=\"#{gopath}\" GOBIN=\"#{gobin}\" go install #{extraflags} #{buildflags} #{importpath}...")
 				break
 			else
-				system("GOPATH=\"#{gopath}\" GOBIN=\"#{gobin}\" go install #{extraflags} #{buildflags} #{importpath}/#{mod}")
+				CLI.run("GOPATH=\"#{gopath}\" GOBIN=\"#{gobin}\" go install #{extraflags} #{buildflags} #{importpath}/#{mod}")
 			end
 		end
 	end
@@ -121,6 +123,9 @@ elsif ARGV[0] == "--build"
 elsif ARGV[0] == "--install"
 
 	puts "Installation stage:\n"
+
+	# check exitstatus
+        File.open("/tmp/exitstatus.txt","r:UTF-8") {|f| abort "Previous stage failed! Abort!" if f.read != "0\n" }
 
 	unless Dir["#{$builddir}/go/pkg/*"].empty?
 		puts "Copying generated stuff to " + $buildroot + $go_contribdir
@@ -146,6 +151,9 @@ elsif ARGV[0] == "--install"
 elsif ARGV[0] == "--source"
 
 	puts "Source package creation:"
+
+	# check exitstatus
+        File.open("/tmp/exitstatus.txt","r:UTF-8") {|f| abort "Previous stage failed! Abort!" if f.read != "0\n" }
 
 	puts "This will copy all *.go files in #{$builddir}/go/src, but resource files needed are still not copyed"
 
@@ -173,12 +181,15 @@ elsif ARGV[0] == "--fix"
 
 	puts "Fixing stuff..."
 
+	# check exitstatus
+        File.open("/tmp/exitstatus.txt","r:UTF-8") {|f| abort "Previous stage failed! Abort!" if f.read != "0\n" }
+
         # only "--fix" is given, no other parameters
         if ARGV.length == 1
                 puts "[ERROR]gofix: please specify a valid importpath, see: go help fix"
         else
                 gopath = $builddir + "/go"
-                system("GOPATH=#{gopath} go fix #{ARGV[1]}...")
+                CLI.run("GOPATH=#{gopath} go fix #{ARGV[1]}...")
         end
 
 	puts "Fixed!"
@@ -187,12 +198,15 @@ elsif ARGV[0] == "--test"
 
 	puts "Testing codes..."
 
+	# check exitstatus
+        File.open("/tmp/exitstatus.txt","r:UTF-8") {|f| abort "Previous stage failed! Abort!" if f.read != "0\n" }
+
 	# only "--test" is given, no other parameters
 	if ARGV.length == 1
 		puts "[ERROR]gotest: please specify a valid importpath, see: go help test"
 	else
 		gopath = $builddir + "/go:" + $libdir + "/go/contrib"
-		system("GOPATH=#{gopath} go test -x #{ARGV[1]}...")
+		CLI.run("GOPATH=#{gopath} go test -x #{ARGV[1]}...")
 	end
 
 	puts "Test passed!"
@@ -201,6 +215,9 @@ elsif ARGV[0] == "--test"
 elsif ARGV[0] == "--filelist"
 
 	puts "Processing filelists..."
+
+	# check exitstatus
+        File.open("/tmp/exitstatus.txt","r:UTF-8") {|f| abort "Previous stage failed! Abort!" if f.read != "0\n" }
 
 	opts = Opts.get_opts
 	excludes = Opts.get_mods[0]
@@ -230,7 +247,7 @@ elsif ARGV[0] == "--filelist"
 
 else
 
-	puts "Please specify a valid method: --prep, --build, --install, --fix, --test, --source."
+	puts "Please specify a valid method: --prep, --build, --install, --fix, --test, --source, --filelist"
 
 end
 
