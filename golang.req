@@ -26,7 +26,15 @@ unless filelist.empty? then
 			f1.each do |l|
 				if l.index(/import\s/)
 					# import runtime "golang.org/x/net/uniform"
-					requires << "golang(" + l.strip!.gsub(/"$/,'').gsub(/^.*"/,'') + ")" if ( l.index(/(\.com|\.net|\.org|gopkg\.in)/) && ! l.index(importpath) )
+					if ( l.index(/(\.com|\.net|\.org|gopkg\.in)/) && ! l.index(importpath) )
+						# import splice "github.com/hanwen/go-fuse/splice" // indirect
+						if l.index("indirect")
+							v = l.strip!.gsub(/\s\/\/\sindirect/,'').gsub(/"$/,'').gsub(/^.*"/,'')
+						else
+							v = l.strip!.gsub(/"$/,'').gsub(/^.*"/,'')
+						end
+						requires << "golang(" + v + ")"
+					end
 				end
 			end
 		end
