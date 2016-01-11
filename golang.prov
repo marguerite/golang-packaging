@@ -28,8 +28,16 @@ unless filelist.empty? then
 		provides << "golang(" + f.gsub(".a","") + ")"
 	end
 
-	provides.uniq!.each do |p|
-		puts p	
+	uni = provides.uniq!
+
+	unless uni == nil
+
+		uni.each {|p| puts p}
+
+	else
+
+		provides.each {|p| puts p}
+
 	end
 
 end
