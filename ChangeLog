@@ -1,3 +1,16 @@
+== update version 14.3 ==
+
+  * fix: command not found error for go test on SLE
+  * fix #5 again: gsub importpath itself is not enough
+
+== update version 14.2 ==
+
+  * golang.req: fix ' // indirect' comment in import
+
+== update version 14.1 ==
+
+  * fix: uniq! returns nil if everything is unique
+
 == update version 14 ==
 
   * if importpath has "test/example", it should survive (github#5)
