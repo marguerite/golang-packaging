@@ -204,7 +204,6 @@ elsif ARGV[0] == "--test"
 		puts "[ERROR]gotest: please specify a valid importpath, see: go help test"
 	else
 		gopath = $builddir + "/go:" + $libdir + "/go/contrib"
-		`GOPATH=#{gopath} go test -x #{ARGV[1]}`
 		CLI.run({"GOPATH"=>gopath}, "go test -x #{ARGV[1]}...")
 	end
 
