@@ -9,10 +9,11 @@ importpath = RpmSysinfo.get_go_importpath
 
 # read stdin for filelist rpm feeds us for a (sub) package
 filelist = []
+prefix = buildroot + contribdir + "/"
 ARGF.each do |l|
 	# if line has "*.a"
 	# buildroot + contribdir + golang.org/x/text/collate/colltab.a
-	filelist << l.gsub(buildroot + contribdir + "/",'').strip! if ( l.index(/\.a\n/) && ! l.gsub(importpath,'').index(/example|test/) )
+	filelist << l.gsub(prefix,'').strip! if ( l.index(".a\n") && ! l.gsub(prefix + importpath,'').index(/example|test/) )
 end
 
 # filelist:
