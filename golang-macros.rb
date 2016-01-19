@@ -104,14 +104,14 @@ elsif ARGV[0] == "--build"
 
 	# MODs: nil, "...", "/...", "foo...", "foo/...", "foo bar", "foo bar... baz" and etc
 	if mods.empty?
-		CLI.run("GOPATH=\"#{gopath}\" GOBIN=\"#{gobin}\" go install #{extraflags} #{buildflags} #{importpath}")	
+		CLI.run({"GOPATH"=>gopath,"GOBIN"=>gobin}, "go install #{extraflags} #{buildflags} #{importpath}")	
 	else
 		for mod in mods do
 			if mod == "..."
-				CLI.run("GOPATH=\"#{gopath}\" GOBIN=\"#{gobin}\" go install #{extraflags} #{buildflags} #{importpath}...")
+				CLI.run({"GOPATH"=>gopath,"GOBIN"=>gobin}, "go install #{extraflags} #{buildflags} #{importpath}...")
 				break
 			else
-				CLI.run("GOPATH=\"#{gopath}\" GOBIN=\"#{gobin}\" go install #{extraflags} #{buildflags} #{importpath}/#{mod}")
+				CLI.run({"GOPATH"=>gopath,"GOBIN"=>gobin}, "go install #{extraflags} #{buildflags} #{importpath}/#{mod}")
 			end
 		end
 	end
@@ -187,7 +187,7 @@ elsif ARGV[0] == "--fix"
                 puts "[ERROR]gofix: please specify a valid importpath, see: go help fix"
         else
                 gopath = $builddir + "/go"
-                CLI.run("GOPATH=#{gopath} go fix #{ARGV[1]}...")
+                CLI.run({"GOPATH"=>gopath},"go fix #{ARGV[1]}...")
         end
 
 	puts "Fixed!"
@@ -204,7 +204,8 @@ elsif ARGV[0] == "--test"
 		puts "[ERROR]gotest: please specify a valid importpath, see: go help test"
 	else
 		gopath = $builddir + "/go:" + $libdir + "/go/contrib"
-		CLI.run("GOPATH=#{gopath} go test -x #{ARGV[1]}...")
+		`GOPATH=#{gopath} go test -x #{ARGV[1]}`
+		CLI.run({"GOPATH"=>gopath}, "go test -x #{ARGV[1]}...")
 	end
 
 	puts "Test passed!"
