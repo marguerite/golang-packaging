@@ -2,14 +2,20 @@
 
 require '/usr/lib/rpm/golang/rpmsysinfo.rb'
 include RpmSysinfo
+buildroot = RpmSysinfo.get_buildroot
+contribdir = RpmSysinfo.get_go_contribdir
 importpath = RpmSysinfo.get_go_importpath
 
 # read stdin for filelist rpm feeds us for a (sub) package
 filelist = []
 ARGF.each do |l|
 	# if line has "*.a"
-	# buildroot + go_contribdir + golang.org/x/text/collate/colltab.a
-	filelist << l.strip! if ( l.index(/\.a\n$/) && ! l.index(/test|example/) )
+	# buildroot + go_contribdir + github.com/stretchr/testify/assert.a
+	if l.index(".a\n")
+		unless l.gsub(buildroot + contribdir + '/' + importpath,'').index(/test|example/)
+			filelist << l.strip!
+		end
+	end
 end
 
 requires = []
