@@ -33,11 +33,11 @@ module RpmSysinfo
 		@@libdir = "/usr/lib64"
 		@@go_arch = "arm64"
 	end
-	if @@rbarch == "ppc64"
+	if @@rbarch == "powerpc64"
 		@@libdir = "/usr/lib64"
 		@@go_arch = "ppc64"
 	end
-	if @@rbarch == "ppc64le"
+	if @@rbarch == "powerpc64le"
 		@@libdir = "/usr/lib64"
 		@@go_arch = "ppc64le"
 	end
