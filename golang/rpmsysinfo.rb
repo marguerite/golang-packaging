@@ -150,7 +150,7 @@ module RpmSysinfo
      
                 return importpath
         
-        end
+	end
 
 end
 

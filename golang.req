@@ -6,6 +6,16 @@ buildroot = RpmSysinfo.get_buildroot
 contribdir = RpmSysinfo.get_go_contribdir
 importpath = RpmSysinfo.get_go_importpath
 
+def go_get_version()
+  IO.popen("go version") do |process|
+    process.each_line do |l|
+      version_re = /^go version go(?<version>\S+)\s+(?<goos>[^\/]+)\/(?<goarch>.*)$/
+      md = version_re.match(l.chomp)
+      return md[:version] if md
+    end
+  end
+end
+
 # read stdin for filelist rpm feeds us for a (sub) package
 filelist = []
 ARGF.each do |l|
@@ -22,7 +32,7 @@ requires = []
 
 unless filelist.empty? then
 
-	requires << "golang(API) = 1.5"
+	requires << "golang(API) = " + go_get_version()
 
 	filelist.each do |f|
 		# unarchive .a
