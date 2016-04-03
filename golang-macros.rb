@@ -43,7 +43,7 @@ elsif ARGV[0] == "--prep"
 
 		# export IMPORTPATH to a temp file, as ruby can't export system environment variables
                 # like shell scripts
-		File.open("/tmp/importpath.txt","w") do |f|
+		File.open("/tmp/importpath.txt","w:UTF-8") do |f|
 			f.puts(importpath)
 		end
 
@@ -83,7 +83,7 @@ elsif ARGV[0] == "--build"
 	buildflags = "-s -v -p 4 -x"
 
 	# get importpath from /tmp/importpath.txt saved by prep()
-	importpath = open("/tmp/importpath.txt","r").gets.strip!
+	importpath = open("/tmp/importpath.txt","r:UTF-8").gets.strip!
 
 	opts = Opts.get_opts
 	mods = Opts.get_mods

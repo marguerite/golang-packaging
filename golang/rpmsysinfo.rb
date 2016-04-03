@@ -104,7 +104,7 @@ module RpmSysinfo
 
 		specfile = Dir.glob(@@topdir + "/SOURCES/*.spec")[0]
 
-                File.open(specfile) do |f|
+                File.open(specfile,'r:UTF-8') do |f|
 
                         f.each_line do |l|
 
