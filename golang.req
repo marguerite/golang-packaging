@@ -9,9 +9,10 @@ importpath = RpmSysinfo.get_go_importpath
 def go_get_version()
   IO.popen("go version") do |process|
     process.each_line do |l|
-      version_re = /^go version go(?<version>\S+)\s+(?<goos>[^\/]+)\/(?<goarch>.*)$/
+      version_re = /^go version go(\S+)\s+([^\/]+)\/(.*)$/
       md = version_re.match(l.chomp)
-      return md[:version] if md
+      # 1:"1.6" 2:"linux" 3:"amd64"
+      return md[1] if md
     end
   end
 end
