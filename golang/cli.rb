@@ -29,7 +29,7 @@ module CLI
     rescue Timeout::Error
       Process.kill(9,@pipe.pid)
       # collect status
-      Process.wait(@pipe.status) 
+      Process.wait(@pipe.pid) 
     end
 
     write_status($?)
