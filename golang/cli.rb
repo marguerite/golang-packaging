@@ -21,8 +21,10 @@ module CLI
     # some commands need time, an immediate close
     # will get a wrong status, so wait them with
     # timeout 30s
+    # set timeout 300s, because go install takes
+    # lots of time sometimes
     begin
-      Timeout.timeout(30) do		
+      Timeout.timeout(300) do		
         @pipe = IO.popen(cmd)
         Process.wait(@pipe.pid)
       end
@@ -38,6 +40,8 @@ module CLI
 
   def self.run(env={},cmd="")
 
+    puts "GOPATH: #{env}"
+    puts "Command: #{cmd}"
     unless RUBY_VERSION.to_f > 1.8
       popen_env(env,cmd) {|f| f.each_line {|l| puts l}}
     else
