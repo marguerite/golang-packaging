@@ -170,9 +170,6 @@ elsif ARGV[0] == "--source"
 		end
 	end
 
-	# remove previous created tmp file
-	File.delete("/tmp/importpath.txt")
-
 	puts "Source package created!"
 
 elsif ARGV[0] == "--fix"
