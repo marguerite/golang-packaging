@@ -1,3 +1,50 @@
+== update version 14.9.1 ==
+
+  * simplify rpmsysinfo.rb: don't guess variables'
+    values can be passed in by RPM environment
+    variables. use RbConfig to get libdir.
+  * support s390x architecture
+
+== update version 14.9.0 ==
+
+  * Remove runtime dependency for Go API 
+
+== update version 14.8.1 ==
+
+  * bugfix release
+  * fix a typo in cli.rb
+  * increase timeout to 300s, or go install can't
+    finish itself sometimes
+
+== update version 14.8 ==
+
+  * rpmsysinfo.rb: fix encoding problem in open()
+  * cli.rb: ruby 1.8.7 doesn't support passing environment
+    variables in open(), some commands/tests need time to
+    finish, an immediate io.close() will get us wrong
+    exitstatus (broken pipe, code 13). so use 'timeout'
+    module with a 30s and process.wait for them to quit
+    successfully
+  * golang.req: the oniguruma in ruby 1.8.7 doesn't support
+    named group in regexp. so ditch the named group used in
+    go_get_version()
+
+== update version 14.7 ==
+
+  * do not hardcode go version
+
+== update version 14.6 ==
+
+  * fix rbarch for Power Archtectures
+
+== update version 14.5 ==
+
+  * fix a typo that prevent golang.req from working (github#10)
+
+== update version 14.4 ==
+
+  * fix github#5 on golang.req
+
 == update version 14.3 ==
 
   * fix: command not found error for go test on SLE

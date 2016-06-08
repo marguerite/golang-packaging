@@ -19,7 +19,7 @@
 %go_tooldir        %{_datadir}/go/pkg/tool/linux_%{go_arch}
 
 %go_exclusivearch \
-ExclusiveArch:  aarch64 %ix86 x86_64 %arm ppc64 ppc64le
+ExclusiveArch:  aarch64 %ix86 x86_64 %arm ppc64 ppc64le s390x
 
 %go_provides \
 %if 0%{?suse_version} <= 1110 \
