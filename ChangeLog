@@ -1,3 +1,8 @@
+== update version 14.9.2 ==
+
+  * Added go_nostrip macro to disable stripping of debug
+    information and to disable a debug package
+
 == update version 14.9.1 ==
 
   * simplify rpmsysinfo.rb: don't guess variables'
@@ -7,7 +12,7 @@
 
 == update version 14.9.0 ==
 
-  * Remove runtime dependency for Go API 
+  * Remove runtime dependency for Go API
 
 == update version 14.8.1 ==
 
@@ -128,7 +133,7 @@
 == Version 3 ==
 
   * skip *example*.go/*test*.go for Requires finding
-  * support alias format (import xx "xxx") for importpath 
+  * support alias format (import xx "xxx") for importpath
   * add golang-strip-builddep, a tool to strip unneeded importpath from source codes
 
 == Version 2 ==
