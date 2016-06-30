@@ -18,6 +18,10 @@
 %go_contribsrcdir  %{_datadir}/go/contrib/src/
 %go_tooldir        %{_datadir}/go/pkg/tool/linux_%{go_arch}
 
+%go_nostrip \
+%undefine _build_create_debug \
+%define __arch_install_post export NO_BRP_STRIP_DEBUG=true
+
 %go_exclusivearch \
 ExclusiveArch:  aarch64 %ix86 x86_64 %arm ppc64 ppc64le s390x
 
@@ -84,7 +88,7 @@ Provides:       %{name}-devel-static = %{version}
 #              go install importpath/baz
 #
 # See: go help install, go help packages
-%gobuild %{_prefix}/lib/rpm/golang-macros.rb --build 
+%gobuild %{_prefix}/lib/rpm/golang-macros.rb --build
 
 # Install all compiled packages and binaries to the buildroot
 %goinstall %{_prefix}/lib/rpm/golang-macros.rb --install
