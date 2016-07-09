@@ -38,7 +38,7 @@ Provides:       %{name}-devel-static = %{version}
 # Prepare the expected Go package build environement.
 # We need a $GOPATH: go help gopath
 # We need a valid importpath: go help packages
-%goprep %{_prefix}/lib/rpm/golang-macros.rb --prep
+%goprep %{_prefix}/lib/rpm/golang.rb --prep
 
 # %%gobuild macro actually performs the command "go install", but the go
 # toolchain will install to the $GOPATH which allows us then customise the final
@@ -88,18 +88,18 @@ Provides:       %{name}-devel-static = %{version}
 #              go install importpath/baz
 #
 # See: go help install, go help packages
-%gobuild %{_prefix}/lib/rpm/golang-macros.rb --build
+%gobuild %{_prefix}/lib/rpm/golang.rb --build
 
 # Install all compiled packages and binaries to the buildroot
-%goinstall %{_prefix}/lib/rpm/golang-macros.rb --install
+%goinstall %{_prefix}/lib/rpm/golang.rb --install
 
-%gofix %{_prefix}/lib/rpm/golang-macros.rb --fix
+%gofix %{_prefix}/lib/rpm/golang.rb --fix
 
-%gotest %{_prefix}/lib/rpm/golang-macros.rb --test
+%gotest %{_prefix}/lib/rpm/golang.rb --test
 
-%gosrc %{_prefix}/lib/rpm/golang-macros.rb --source
+%gosrc %{_prefix}/lib/rpm/golang.rb --source
 
-%go_filelist %{_prefix}/lib/rpm/golang-macros.rb --filelist
+%go_filelist %{_prefix}/lib/rpm/golang.rb --filelist
 
 # Template for source sub-package
 %gosrc_package(n:r:) \

@@ -87,8 +87,8 @@ module RpmSysinfo
 
 		# this funtion is used in golang.prov/req only
 		# called after %go_prep
-		# so the simplest method is to read /tmp/importpath.txt
-		return open("/tmp/importpath.txt","r:UTF-8").gets.strip!        
+		# so the simplest method is to read /tmp/importpath
+		return open("/tmp/importpath","r:UTF-8").gets.strip!        
 
 	end
 

@@ -1,17 +1,7 @@
 module CLI
 
+  require 'fileutils'
   require 'timeout'
-
-  def write_status(status)
-    file = "/tmp/exitstatus.txt"
-    mode = "w:UTF-8"
-    if status == 0
-      File.open(file,mode) {|f| f.puts(0)}
-    else
-      File.open(file,mode) {|f| f.puts(1)}
-      abort "[ERROR]Go command failed! Please check."
-    end
-  end
 
   # popen in 1.8 doesn't support env hash
   def popen_env(hash, cmd)
@@ -24,17 +14,20 @@ module CLI
     # set timeout 300s, because go install takes
     # lots of time sometimes
     begin
-      Timeout.timeout(300) do		
+      Timeout.timeout(300) do
         @pipe = IO.popen(cmd)
         Process.wait(@pipe.pid)
       end
     rescue Timeout::Error
       Process.kill(9,@pipe.pid)
       # collect status
-      Process.wait(@pipe.pid) 
+      Process.wait(@pipe.pid)
     end
 
-    write_status($?)
+    if $? == 1
+      FileUtils.touch "/tmp/failed"
+      abort '[ERROR]Go command failed! Please check.'
+    end
 
   end
 
@@ -46,10 +39,12 @@ module CLI
       popen_env(env,cmd) {|f| f.each_line {|l| puts l}}
     else
       IO.popen(env,cmd) {|f| f.each_line {|l| puts l}}
-      write_status($?)
+      if $? != 0
+        FileUtils.touch "/tmp/failed"
+        abort "[ERROR]Go command faild! Please check."
+      end
     end
 
   end
 
 end
-
