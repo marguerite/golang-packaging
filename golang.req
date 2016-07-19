@@ -1,52 +1,25 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env bash
 
-require '/usr/lib/rpm/golang/rpmsysinfo.rb'
-include RpmSysinfo
-buildroot = RpmSysinfo.get_buildroot
-contribdir = RpmSysinfo.get_go_contribdir
-importpath = RpmSysinfo.get_go_importpath
+export GOPATH=${RPM_BUILD_ROOT}/usr/share/go/contrib
+export GO15VENDOREXPERIMENT=1
 
-# read stdin for filelist rpm feeds us for a (sub) package
-filelist = []
-ARGF.each do |l|
-	# if line has "*.a"
-	# buildroot + go_contribdir + github.com/stretchr/testify/assert.a
-	if l.index(".a\n")
-		unless l.gsub(buildroot + contribdir + '/' + importpath,'').index(/test|example/)
-			filelist << l.strip!
-		end
-	end
-end
+IMPORT="$(cat /tmp/importpath.txt)"
+CHECK="${GOPATH}/src/${IMPORT}"
 
-requires = []
+# /home/abuild/rpmbuild/BUILDROOT/golang-github-codegangsta-cli-1.17.1+git20160828.599ee69-0.x86_64/usr/share/go/contrib/src/github.com/codegangsta/cli
+# /home/abuild/rpmbuild/BUILDROOT/golang-github-codegangsta-cli-1.17.1+git20160828.599ee69-0.x86_64/usr/share/go/contrib/src/github.com/codegangsta/cli/altsrc
 
-unless filelist.empty? then
-	filelist.each do |f|
-		# unarchive .a
-		system("ar -x #{f} __.PKGDEF")
-		# read imports
-		File.open("__.PKGDEF","r:UTF-8") do |f1|
-			f1.each do |l|
-				if l.index(/import\s/)
-					# import runtime "golang.org/x/net/uniform"
-					if ( l.index(/(\.com|\.net|\.org|gopkg\.in)/) && ! l.index(importpath) )
-						# import splice "github.com/hanwen/go-fuse/splice" // indirect
-						if l.index("indirect")
-							v = l.strip!.gsub(/\s\/\/\sindirect/,'').gsub(/"$/,'').gsub(/^.*"/,'')
-						else
-							v = l.strip!.gsub(/"$/,'').gsub(/^.*"/,'')
-						end
-						requires << "golang(" + v + ")"
-					end
-				end
-			end
-		end
-		# clean
-		File.delete("__.PKGDEF")
-	end
+while read INPUT; do
+  # if [[ -d ${INPUT} ]] && [[ ${INPUT} == ${CHECK}* ]]; then
+  #   echo "golang(${INPUT#${CHECK}/})"
+  # fi
+  :
+done
 
-	requires.each do |p|
-		puts p
-	end
+for SEGMENT in $(go list -f '{{range $deps := .Deps}}{{printf "%s\n" $deps}}{{end}}' ${IMPORT}/... | grep -v ${IMPORT}); do
+  STANDARD=$(go list -f '{{if not .Standard}}{{.ImportPath}}{{end}}' ${SEGMENT} 2> /dev/null)
 
-end
+  if [[ $? -ne 0 || "${STANDARD}" != "" ]]; then
+    echo "golang(${SEGMENT})"
+  fi
+done

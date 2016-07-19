@@ -1,44 +1,21 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env bash
 
-require '/usr/lib/rpm/golang/rpmsysinfo.rb'
-include RpmSysinfo
+export GOPATH=${RPM_BUILD_ROOT}/usr/share/go/contrib
+export GO15VENDOREXPERIMENT=1
 
-buildroot = RpmSysinfo.get_buildroot
-contribdir = RpmSysinfo.get_go_contribdir
-importpath = RpmSysinfo.get_go_importpath
+IMPORT="$(cat /tmp/importpath.txt)"
+CHECK="${GOPATH}/src/${IMPORT}"
 
-# read stdin for filelist rpm feeds us for a (sub) package
-filelist = []
-prefix = buildroot + contribdir + "/"
-ARGF.each do |l|
-	# if line has "*.a"
-	# buildroot + contribdir + golang.org/x/text/collate/colltab.a
-	filelist << l.gsub(prefix,'').strip! if ( l.index(".a\n") && ! l.gsub(prefix + importpath,'').index(/example|test/) )
-end
+# /home/abuild/rpmbuild/BUILDROOT/golang-github-codegangsta-cli-1.17.1+git20160828.599ee69-0.x86_64/usr/share/go/contrib/src/github.com/codegangsta/cli
+# /home/abuild/rpmbuild/BUILDROOT/golang-github-codegangsta-cli-1.17.1+git20160828.599ee69-0.x86_64/usr/share/go/contrib/src/github.com/codegangsta/cli/altsrc
 
-# filelist:
-# golang.org/x/text/collate/colltab.a
+while read INPUT; do
+  # if [[ -d ${INPUT} ]] && [[ ${INPUT} == ${CHECK}* ]]; then
+  #   echo "golang(${INPUT#${CHECK}/})"
+  # fi
+  :
+done
 
-provides = []
-
-unless filelist.empty? then
-
-	provides << "golang(" + importpath + ")"
-
-	filelist.each do |f|
-		provides << "golang(" + f.gsub(".a","") + ")"
-	end
-
-	uni = provides.uniq!
-
-	unless uni == nil
-
-		uni.each {|p| puts p}
-
-	else
-
-		provides.each {|p| puts p}
-
-	end
-
-end
+for SEGMENT in $(go list -f '{{.ImportPath}}' ${IMPORT}/... | grep -v /vendor/); do
+  echo "golang(${SEGMENT})"
+done
