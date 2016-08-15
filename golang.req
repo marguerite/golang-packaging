@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+if File.exist? "/tmp/shared"
+
 require '/usr/lib/rpm/golang/rpmsysinfo.rb'
 include RpmSysinfo
 buildroot = RpmSysinfo.get_buildroot
@@ -63,5 +65,7 @@ unless filelist.empty? then
 	requires.each do |p|
 		puts p
 	end
+
+end
 
 end

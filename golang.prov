@@ -5,19 +5,21 @@ include RpmSysinfo
 
 buildroot = RpmSysinfo.get_buildroot
 contribdir = RpmSysinfo.get_go_contribdir
+contribsrcdir = RpmSysinfo.get_go_contribsrcdir
 importpath = RpmSysinfo.get_go_importpath
 
 # read stdin for filelist rpm feeds us for a (sub) package
 filelist = []
-prefix = buildroot + contribdir + "/"
-ARGF.each do |l|
-	# if line has "*.a"
-	# buildroot + contribdir + golang.org/x/text/collate/colltab.a
-	filelist << l.gsub(prefix,'').strip! if ( l.index(".a\n") && ! l.gsub(prefix + importpath,'').index(/example|test/) )
-end
 
-# filelist:
-# golang.org/x/text/collate/colltab.a
+ARGF.each do |l|
+	if File.exist?("/tmp/shared")
+		prefix = buildroot + contribdir + "/"	
+		filelist << l.gsub(prefix,'').strip! if ( l.index(".a\n") && ! l.gsub(prefix + importpath,'').index(/example|test/) )
+	else
+		prefix = buildroot + contribsrcdir + "/"
+		filelist << l.gsub(prefix,'').strip! if ( l.index(".go\n") && ! l.gsub(prefix + importpath, '').index(/example|test/) )
+	end
+end
 
 provides = []
 
@@ -26,19 +28,21 @@ unless filelist.empty? then
 	provides << "golang(" + importpath + ")"
 
 	filelist.each do |f|
-		provides << "golang(" + f.gsub(".a","") + ")"
+		if File.exist?("/tmp/shared")
+			provides << "golang(" + f.gsub(".a","") + ")"
+		else
+			# match the last "/" and following bits, will return the direcctory
+			provides << "golang(" + f.gsub(/\/(?:.(?!\/))+$/,'') + ")"
+		end
 	end
 
 	uni = provides.uniq!
 
 	unless uni == nil
-
 		uni.each {|p| puts p}
-
 	else
-
 		provides.each {|p| puts p}
-
 	end
 
 end
+
