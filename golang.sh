@@ -8,7 +8,7 @@ store_import_path() {
 
 check_import_path() {
   if [[ "$(get_import_path)" == "" ]]; then
-    echo "Empty import path, please specify a valid one!"
+    echo "Empty import path, please specify a valid one!" >&2
     exit 1
   fi
 }
@@ -63,7 +63,7 @@ process_arch() {
   "i386"|"i486"|"i586"|"i686"|"pentium3"|"pentium4"|"athlon"|"geode")
     echo "386"
     ;;
-  "armv3l"|"armv4b"|"armv4l"|"armv4tl"|"armv5b"|"armv5l"|"armv5teb"|"armv5tel"|"armv5tejl"|"armv6l"|"armv6hl"|"armv7l"|"armv7hl")
+  armv*)
     echo "arm"
     ;;
   *)
@@ -168,7 +168,7 @@ process_source() {
 
 process_test() {
   if [[ "${1}" == "" ]]; then
-    echo "Please specify a valid importpath, refernce: go help test"
+    echo "Please specify a valid importpath, refernce: go help test" >&2
     exit 1
   fi
 
@@ -183,9 +183,7 @@ process_test() {
 process_filelist() {
   local file_list="file.lst"
 
-  if [[ -f ${file_list} ]]; then
-    rm -f ${file_list}
-  fi
+  rm -f ${file_list}
 
   for path in $(find ${RPM_BUILD_ROOT}$(get_source_path)); do
     local destination=${path#${RPM_BUILD_ROOT}}
@@ -231,7 +229,7 @@ main() {
     process_godoc ${@:2}
     ;;
   *)
-    echo "Please specify a valid method: arch, prep, build, install, source, test, filelist, godoc"
+    echo "Please specify a valid method: arch, prep, build, install, source, test, filelist, godoc" >&2
     ;;
   esac
 }

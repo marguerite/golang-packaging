@@ -6,13 +6,8 @@ export GO15VENDOREXPERIMENT=1
 IMPORT="$(cat /tmp/importpath.txt)"
 CHECK="${GOPATH}/src/${IMPORT}"
 
-# /home/abuild/rpmbuild/BUILDROOT/golang-github-codegangsta-cli-1.17.1+git20160828.599ee69-0.x86_64/usr/share/go/contrib/src/github.com/codegangsta/cli
-# /home/abuild/rpmbuild/BUILDROOT/golang-github-codegangsta-cli-1.17.1+git20160828.599ee69-0.x86_64/usr/share/go/contrib/src/github.com/codegangsta/cli/altsrc
-
+# Read from STDIN to not cause a broken pipe
 while read INPUT; do
-  # if [[ -d ${INPUT} ]] && [[ ${INPUT} == ${CHECK}* ]]; then
-  #   echo "golang(${INPUT#${CHECK}/})"
-  # fi
   :
 done
 

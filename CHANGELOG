@@ -1,7 +1,7 @@
 == update version 15.0.0 ==
 
   * Total refactoring of the codebase, dropped the ruby dependency and now we
-    are also using fure bash and go tooling
+    are also using pure bash and go tooling
 
 == update version 14.9.2 ==
 
