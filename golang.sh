@@ -111,7 +111,12 @@ process_build() {
   check_import_path
 
   local modifier="${@: -1}"
-  local last=$(($#-1))
+
+  if [[ "$#" -eq 0 ]]; then
+    local last=0
+  else
+    local last=$(($#-1))
+  fi
 
   local build_flags="-s -v -p 4 -x"
   local extra_flags="${@:1:$last}"
@@ -173,7 +178,13 @@ process_test() {
   fi
 
   local modifier="${@: -1}"
-  local last=$(($#-1))
+
+  if [[ "$#" -eq 0 ]]; then
+    local last=0
+  else
+    local last=$(($#-1))
+  fi
+
   local extra_flags="${@:1:$last}"
 
   GOPATH=$(get_build_path):$(get_buildcontrib_path) GOBIN=$(get_gobin_path) go \
