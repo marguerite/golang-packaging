@@ -110,11 +110,12 @@ process_prepare() {
 process_build() {
   check_import_path
 
-  local modifier="${@: -1}"
 
   if [[ "$#" -eq 0 ]]; then
+    local modifier=
     local last=0
   else
+    local modifier="${@: -1}"
     local last=$(($#-1))
   fi
 
@@ -173,7 +174,7 @@ process_source() {
 
 process_test() {
   if [[ "${1}" == "" ]]; then
-    echo "Please specify a valid importpath, refernce: go help test" >&2
+    echo "Please specify a valid importpath, reference: go help test" >&2
     exit 1
   fi
 
