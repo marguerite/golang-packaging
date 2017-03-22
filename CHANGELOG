@@ -1,3 +1,7 @@
+== update version 15.0.2 ==
+
+  * Set correct modifier when running build with no arguments
+
 == update version 15.0.1 ==
 
   * Fix crash when running build or test with no argument
