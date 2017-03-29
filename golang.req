@@ -16,7 +16,7 @@ while read INPUT; do
   :
 done
 
-for SEGMENT in $(go list -f '{{range $deps := .Deps}}{{printf "%s\n" $deps}}{{end}}' ${IMPORT}/... | grep -v ${IMPORT}); do
+for SEGMENT in $(go list -f '{{range $deps := .Deps}}{{printf "%s\n" $deps}}{{end}}' ${IMPORT}/... | grep -v ${IMPORT} | sort -u); do
   STANDARD=$(go list -f '{{if not .Standard}}{{.ImportPath}}{{end}}' ${SEGMENT} 2> /dev/null)
 
   if [[ $? -ne 0 || "${STANDARD}" != "" ]]; then
