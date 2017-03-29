@@ -1,3 +1,7 @@
+== update version 15.0.3 ==
+
+  * Remove duplicates when finding Requires
+
 == update version 15.0.2 ==
 
   * Set correct modifier when running build with no arguments
