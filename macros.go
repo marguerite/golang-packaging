@@ -6,19 +6,18 @@
 #
 
 
-%go_ver           %(LC_ALL=C rpm -q --qf '%%{epoch}:%%{version}\\n' go | sed -e 's/(none)://' -e 's/ 0:/ /' | grep -v "is not")
-%go_arch	        %(%{_prefix}/lib/rpm/golang.sh arch)
-%go_build_ver     %(go version | sed 's/^go version //' | sed 's:\/::g' | tr -d ' ' | cut -c 1-7 )
-%go_api_ver       %(echo %{go_ver} | sed 's/\.[0-9]$//')
+%go_arch          %(%{_prefix}/lib/rpm/golang.sh arch)
+%go_ver           %(go version | awk '{print $3}' | sed 's/go//')
+%go_api_ver       %(echo %{go_ver} | grep -Eo '[[:digit:]]+\.[[:digit:]]+')
 
 %go_dir           %{_libdir}/go
-%go_bindir        %{_libdir}/go/bin
-%go_srcdir        %{_libdir}/go/src
-%go_sitedir       %{_libdir}/go/pkg
-%go_sitearch      %{_libdir}/go/pkg/linux_%{go_arch}
-%go_contribdir    %{_libdir}/go/contrib/pkg/linux_%{go_arch}
-%go_contribsrcdir %{_datadir}/go/contrib/src/
-%go_tooldir       %{_datadir}/go/pkg/tool/linux_%{go_arch}
+%go_bindir        %{_libdir}/go/%{go_api_ver}/bin
+%go_srcdir        %{_libdir}/go/%{go_api_ver}/src
+%go_sitedir       %{_libdir}/go/%{go_api_ver}/pkg
+%go_sitearch      %{_libdir}/go/%{go_api_ver}/pkg/linux_%{go_arch}
+%go_contribdir    %{_libdir}/go/%{go_api_ver}/contrib/pkg/linux_%{go_arch}
+%go_contribsrcdir %{_datadir}/go/%{go_api_ver}/contrib/src/
+%go_tooldir       %{_datadir}/go/%{go_api_ver}/pkg/tool/linux_%{go_arch}
 
 %go_nostrip \
 %undefine _build_create_debug \

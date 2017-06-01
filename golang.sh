@@ -30,7 +30,7 @@ get_gobin_path() {
 }
 
 get_gocontrib_path() {
-  echo "$(rpm --eval %{_datadir})/go/contrib"
+  echo "$(rpm --eval %{_datadir})/go/$(rpm --eval %go_api_ver)/contrib"
 }
 
 get_contrib_path() {
