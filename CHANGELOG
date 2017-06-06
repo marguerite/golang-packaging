@@ -1,3 +1,8 @@
+== update version 15.0.4 ==
+
+  * Include go API version in GOPATH and macros
+  * Fix Requires and Provides
+
 == update version 15.0.3 ==
 
   * Remove duplicates when finding Requires
