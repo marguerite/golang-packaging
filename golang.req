@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+if [[ -z "${RPM_BUILD_ROOT}" ]]; then
+  export RPM_BUILD_ROOT="$(cat /tmp/buildrootpath.txt)"
+fi
+
 export GOPATH="${RPM_BUILD_ROOT}/usr/share/go/$(rpm --eval %go_api_ver)/contrib:${GOPATH}"
 export GO15VENDOREXPERIMENT=1
 

@@ -2,6 +2,10 @@
 set -e
 set -x
 
+store_buildroot_path() {
+  echo ${RPM_BUILD_ROOT} >| /tmp/buildrootpath.txt
+}
+
 store_import_path() {
   echo ${1} >| /tmp/importpath.txt
 }
@@ -75,6 +79,7 @@ process_arch() {
 process_prepare() {
   store_import_path "${1}"
   check_import_path
+  store_buildroot_path
 
   echo "Creating build path $(get_destination_path)"
   rm -rf $(get_destination_path)
