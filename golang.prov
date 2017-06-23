@@ -19,7 +19,6 @@ export GOPATH="${RPM_BUILD_ROOT}/usr/share/go/$(rpm --eval %go_api_ver)/contrib:
 export GO15VENDOREXPERIMENT=1
 
 IMPORT="$(cat /tmp/importpath.txt)"
-CHECK="${GOPATH}/src/${IMPORT}"
 
 # Read from STDIN to not cause a broken pipe
 while read INPUT; do
