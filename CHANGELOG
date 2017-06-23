@@ -1,3 +1,8 @@
+== update version 15.0.5 ==
+
+  * Fix Requires/Provides issue with split packages
+  * Remove unused variables
+
 == update version 15.0.4 ==
 
   * Include go API version in GOPATH and macros
