@@ -4,11 +4,21 @@ if [[ -z "${RPM_BUILD_ROOT}" ]]; then
   export RPM_BUILD_ROOT="$(cat /tmp/buildrootpath.txt)"
 fi
 
-export GOPATH="${RPM_BUILD_ROOT}/usr/share/go/$(rpm --eval %go_api_ver)/contrib:${GOPATH}"
+# Exclude the existing contrib directory from GOPATH, otherwise the underlying
+# packages may be marked as provided packages which might be incorrect.
+tmpgopath=
+for entry in $(echo "${GOPATH}" | tr ':' '\n'); do
+  [[ -z "${entry}" || "${entry}" =~ 'contrib' ]] && continue
+  if [[ -z "${tmpgopath}" ]]; then
+    tmpgopath="${entry}"
+  else
+    tmpgopath="${tmpgopath}:${entry}"
+  fi
+done
+export GOPATH="${RPM_BUILD_ROOT}/usr/share/go/$(rpm --eval %go_api_ver)/contrib:${tmpgopath}"
 export GO15VENDOREXPERIMENT=1
 
 IMPORT="$(cat /tmp/importpath.txt)"
-CHECK="${GOPATH}/src/${IMPORT}"
 
 # Read from STDIN to not cause a broken pipe
 while read INPUT; do

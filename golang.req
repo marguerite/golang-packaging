@@ -4,19 +4,23 @@ if [[ -z "${RPM_BUILD_ROOT}" ]]; then
   export RPM_BUILD_ROOT="$(cat /tmp/buildrootpath.txt)"
 fi
 
-export GOPATH="${RPM_BUILD_ROOT}/usr/share/go/$(rpm --eval %go_api_ver)/contrib:${GOPATH}"
+# Exclude the existing contrib directory from GOPATH, otherwise there might be
+# incorrect requirements listed.
+tmpgopath=
+for entry in $(echo "${GOPATH}" | tr ':' '\n'); do
+  [[ -z "${entry}" || "${entry}" =~ 'contrib' ]] && continue
+  if [[ -z "${tmpgopath}" ]]; then
+    tmpgopath="${entry}"
+  else
+    tmpgopath="${tmpgopath}:${entry}"
+  fi
+done
+export GOPATH="${RPM_BUILD_ROOT}/usr/share/go/$(rpm --eval %go_api_ver)/contrib:${tmpgopath}"
 export GO15VENDOREXPERIMENT=1
 
 IMPORT="$(cat /tmp/importpath.txt)"
-CHECK="${GOPATH}/src/${IMPORT}"
-
-# /home/abuild/rpmbuild/BUILDROOT/golang-github-codegangsta-cli-1.17.1+git20160828.599ee69-0.x86_64/usr/share/go/contrib/src/github.com/codegangsta/cli
-# /home/abuild/rpmbuild/BUILDROOT/golang-github-codegangsta-cli-1.17.1+git20160828.599ee69-0.x86_64/usr/share/go/contrib/src/github.com/codegangsta/cli/altsrc
 
 while read INPUT; do
-  # if [[ -d ${INPUT} ]] && [[ ${INPUT} == ${CHECK}* ]]; then
-  #   echo "golang(${INPUT#${CHECK}/})"
-  # fi
   :
 done
 
