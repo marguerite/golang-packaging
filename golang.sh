@@ -124,7 +124,7 @@ process_build() {
     local last=$(($#-1))
   fi
 
-  local build_flags="-s -v -p 4 -x"
+  local build_flags="-s -v -p 4 -x -buildmode=pie"
   local extra_flags="${@:1:$last}"
 
   case "${modifier}" in
