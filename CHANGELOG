@@ -1,5 +1,9 @@
 == update version 15.0.5 ==
 
+  * always use -buildmode=pie
+
+== update version 15.0.5 ==
+
   * Fix Requires/Provides issue with split packages
   * Remove unused variables
 
