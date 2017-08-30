@@ -67,6 +67,9 @@ process_arch() {
   "i386"|"i486"|"i586"|"i686"|"pentium3"|"pentium4"|"athlon"|"geode")
     echo "386"
     ;;
+  aarch64*)
+    echo "arm64"
+    ;;
   armv*)
     echo "arm"
     ;;
