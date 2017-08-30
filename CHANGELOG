@@ -1,3 +1,7 @@
+== update version 15.0.7 ==
+
+  * golang.sh: Fix arch for aarch64
+
 == update version 15.0.6 ==
 
   * always use -buildmode=pie
