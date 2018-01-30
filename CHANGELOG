@@ -1,3 +1,7 @@
+== unreleased ==
+
+  * Fix the handling of quoted extra args to the gobuild and gotest macros.
+
 == update version 15.0.7 ==
 
   * golang.sh: Fix arch for aarch64
