@@ -128,20 +128,22 @@ process_build() {
   fi
 
   local build_flags="-s -v -p 4 -x -buildmode=pie"
-  local extra_flags="${@:1:$last}"
+  local extra_flags=(
+    "${@:1:$last}"
+  )
 
   case "${modifier}" in
   "...")
     GOPATH=$(get_build_path):$(get_buildcontrib_path) GOBIN=$(get_gobin_path) go \
-      install ${build_flags} ${extra_flags} $(get_import_path)...
+      install ${build_flags} "${extra_flags[@]}" $(get_import_path)...
     ;;
   "")
     GOPATH=$(get_build_path):$(get_buildcontrib_path) GOBIN=$(get_gobin_path) go \
-      install ${build_flags} ${extra_flags} $(get_import_path)
+      install ${build_flags} "${extra_flags[@]}" $(get_import_path)
     ;;
   *)
     GOPATH=$(get_build_path):$(get_buildcontrib_path) GOBIN=$(get_gobin_path) go \
-      install ${build_flags} ${extra_flags} $(get_import_path)/${modifier}
+      install ${build_flags} "${extra_flags[@]}" $(get_import_path)/${modifier}
     ;;
   esac
 }
@@ -194,10 +196,12 @@ process_test() {
     local last=$(($#-1))
   fi
 
-  local extra_flags="${@:1:$last}"
+  local extra_flags=(
+    "${@:1:$last}"
+  )
 
   GOPATH=$(get_build_path):$(get_buildcontrib_path) GOBIN=$(get_gobin_path) go \
-    test ${extra_flags} -x ${modifier}
+    test "${extra_flags[@]}" -x ${modifier}
 }
 
 process_filelist() {
@@ -225,28 +229,28 @@ main() {
 
   case "${action}" in
   "--arch"|"arch")
-    process_arch ${@:2}
+    process_arch "${@:2}"
     ;;
   "--prep"|"prep")
-    process_prepare ${@:2}
+    process_prepare "${@:2}"
     ;;
   "--build"|"build")
-    process_build ${@:2}
+    process_build "${@:2}"
     ;;
   "--install"|"install")
-    process_install ${@:2}
+    process_install "${@:2}"
     ;;
   "--source"|"source")
-    process_source ${@:2}
+    process_source "${@:2}"
     ;;
   "--test"|"test")
-    process_test ${@:2}
+    process_test "${@:2}"
     ;;
   "--filelist"|"filelist")
-    process_filelist ${@:2}
+    process_filelist "${@:2}"
     ;;
   "--godoc"|"godoc")
-    process_godoc ${@:2}
+    process_godoc "${@:2}"
     ;;
   *)
     echo "Please specify a valid method: arch, prep, build, install, source, test, filelist, godoc" >&2
@@ -254,4 +258,4 @@ main() {
   esac
 }
 
-main $@
+main "$@"
