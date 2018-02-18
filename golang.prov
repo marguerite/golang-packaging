@@ -1,48 +1,30 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env bash
 
-require '/usr/lib/rpm/golang/rpmsysinfo.rb'
-include RpmSysinfo
+if [[ -z "${RPM_BUILD_ROOT}" ]]; then
+  export RPM_BUILD_ROOT="$(cat /tmp/buildrootpath.txt)"
+fi
 
-buildroot = RpmSysinfo.get_buildroot
-contribdir = RpmSysinfo.get_go_contribdir
-contribsrcdir = RpmSysinfo.get_go_contribsrcdir
-importpath = RpmSysinfo.get_go_importpath
+# Exclude the existing contrib directory from GOPATH, otherwise the underlying
+# packages may be marked as provided packages which might be incorrect.
+tmpgopath=
+for entry in $(echo "${GOPATH}" | tr ':' '\n'); do
+  [[ -z "${entry}" || "${entry}" =~ 'contrib' ]] && continue
+  if [[ -z "${tmpgopath}" ]]; then
+    tmpgopath="${entry}"
+  else
+    tmpgopath="${tmpgopath}:${entry}"
+  fi
+done
+export GOPATH="${RPM_BUILD_ROOT}/usr/share/go/$(rpm --eval %go_api_ver)/contrib:${tmpgopath}"
+export GO15VENDOREXPERIMENT=1
 
-# read stdin for filelist rpm feeds us for a (sub) package
-filelist = []
+IMPORT="$(cat /tmp/importpath.txt)"
 
-ARGF.each do |l|
-	if File.exist?("/tmp/shared")
-		prefix = buildroot + contribdir + "/"	
-		filelist << l.gsub(prefix,'').strip! if ( l.index(".a\n") && ! l.gsub(prefix + importpath,'').index(/example|test/) )
-	else
-		prefix = buildroot + contribsrcdir + "/"
-		filelist << l.gsub(prefix,'').strip! if ( l.index(".go\n") && ! l.gsub(prefix + importpath, '').index(/example|test/) )
-	end
-end
+# Read from STDIN to not cause a broken pipe
+while read INPUT; do
+  :
+done
 
-provides = []
-
-unless filelist.empty? then
-
-	provides << "golang(" + importpath + ")"
-
-	filelist.each do |f|
-		if File.exist?("/tmp/shared")
-			provides << "golang(" + f.gsub(".a","") + ")"
-		else
-			# match the last "/" and following bits, will return the direcctory
-			provides << "golang(" + f.gsub(/\/(?:.(?!\/))+$/,'') + ")"
-		end
-	end
-
-	uni = provides.uniq!
-
-	unless uni == nil
-		uni.each {|p| puts p}
-	else
-		provides.each {|p| puts p}
-	end
-
-end
-
+for SEGMENT in $(go list -f '{{.ImportPath}}' ${IMPORT}/... | grep -v /vendor/); do
+  echo "golang(${SEGMENT})"
+done

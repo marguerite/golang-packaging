@@ -1,0 +1,182 @@
+== update version 15.0.8 ==
+
+  * Fix the handling of quoted extra args to the gobuild and gotest macros.
+
+== update version 15.0.7 ==
+
+  * golang.sh: Fix arch for aarch64
+
+== update version 15.0.6 ==
+
+  * always use -buildmode=pie
+
+== update version 15.0.5 ==
+
+  * Fix Requires/Provides issue with split packages
+  * Remove unused variables
+
+== update version 15.0.4 ==
+
+  * Include go API version in GOPATH and macros
+  * Fix Requires and Provides
+
+== update version 15.0.3 ==
+
+  * Remove duplicates when finding Requires
+
+== update version 15.0.2 ==
+
+  * Set correct modifier when running build with no arguments
+
+== update version 15.0.1 ==
+
+  * Fix crash when running build or test with no argument
+
+== update version 15.0.0 ==
+
+  * Total refactoring of the codebase, dropped the ruby dependency and now we
+    are also using pure bash and go tooling
+
+== update version 14.9.2 ==
+
+  * Added go_nostrip macro to disable stripping of debug information and to
+    disable a debug package
+
+== update version 14.9.1 ==
+
+  * simplify rpmsysinfo.rb: don't guess variables' values can be passed in by
+    RPM environment variables. use RbConfig to get libdir.
+  * support s390x architecture
+
+== update version 14.9.0 ==
+
+  * Remove runtime dependency for Go API
+
+== update version 14.8.1 ==
+
+  * bugfix release
+  * fix a typo in cli.rb
+  * increase timeout to 300s, or go install can't finish itself sometimes
+
+== update version 14.8 ==
+
+  * rpmsysinfo.rb: fix encoding problem in open()
+  * cli.rb: ruby 1.8.7 doesn't support passing environment variables in open(),
+    some commands/tests need time to finish, an immediate io.close() will get us
+    wrong exitstatus (broken pipe, code 13). so use 'timeout' module with a 30s
+    and process.wait for them to quit successfully
+  * golang.req: the oniguruma in ruby 1.8.7 doesn't support named group in
+    regexp. so ditch the named group used in go_get_version()
+
+== update version 14.7 ==
+
+  * do not hardcode go version
+
+== update version 14.6 ==
+
+  * fix rbarch for Power Archtectures
+
+== update version 14.5 ==
+
+  * fix a typo that prevent golang.req from working (github#10)
+
+== update version 14.4 ==
+
+  * fix github#5 on golang.req
+
+== update version 14.3 ==
+
+  * fix: command not found error for go test on SLE
+  * fix #5 again: gsub importpath itself is not enough
+
+== update version 14.2 ==
+
+  * golang.req: fix ' // indirect' comment in import
+
+== update version 14.1 ==
+
+  * fix: uniq! returns nil if everything is unique
+
+== update version 14 ==
+
+  * if importpath has "test/example", it should survive (github#5)
+  * merge macros.go from openSUSE's go here
+  * add golang-macros.rb, replacement for the complicated macros in shell in
+    macros.go
+  * golang-macros.rb:
+    + support build with fake build id
+    + support build with custom tags (github#7)
+    + support pass any -<arg>="a b c" or -<arg>=<value> to go install, shared
+      build is possible now (not fully support, other macros need to be adapted)
+    + --filelist, to generate filelist used in %files section with excluding
+      support
+    + use IO.popen to break the build at the exact place
+      it fails (github#6)
+
+== update version 13 ==
+
+  * provides the importpath itself
+  * fix regex not to check files like .golden in -source
+  * filter "test/example" from Provides
+  * split common stuff to a module golang/rpmsysinfo.rb
+  * rewrite golang.req, now read from stdin RPM feeds, and check __.PKGDEF from
+    .a files for "import"s. (github#3 github#4）
+
+== update version 12 ==
+
+  * rewrite golang.prov. it should take filelist feeded by rpm in case not to
+    add provides for source/debuginfo/debugsource sub-packages
+  * simply golang.req: own is actually importpath, no need to call golang.prov
+    again
+
+== update version 11 ==
+
+  * support SLE11
+
+== update version 10 ==
+
+  * support all archtectures like ppc/arm
+
+== update version 9 ==
+
+  * update golang(API) to 1.5
+
+== update version 8 ==
+
+  * skip the last "/" in golang.prov, thanks to matwey
+
+== udpate version 7 ==
+
+  * handle gopkg.in/* requirements
+
+== update version 6 ==
+
+  * fix golang.req to not treat a sentence as importpath
+  * fix golang.attr to correctly detect /usr/bin/*
+
+== update version 5 ==
+
+  * if a sub-directory doesn't contain any *.go file, do not treat it as a
+    Provides candidate.
+  * add /usr/bin to golang.attr for go executes to be handled by
+    golang-packaging
+
+== update version 4 ==
+
+  * fix encoding error in golang-strip-builddep
+  * add macros.go-extra, extra golang macros for packaging
+
+== update version 3 ==
+
+  * skip *example*.go/*test*.go for Requires finding
+  * support alias format (import xx "xxx") for importpath
+  * add golang-strip-builddep, a tool to strip unneeded importpath from source
+    codes
+
+== update version 2 ==
+
+  * fix pkgname detection
+
+== update version 1 ==
+
+  * implement Requires/Provides

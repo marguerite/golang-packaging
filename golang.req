@@ -1,71 +1,33 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env bash
 
-if File.exist? "/tmp/shared"
+if [[ -z "${RPM_BUILD_ROOT}" ]]; then
+  export RPM_BUILD_ROOT="$(cat /tmp/buildrootpath.txt)"
+fi
 
-require '/usr/lib/rpm/golang/rpmsysinfo.rb'
-include RpmSysinfo
-buildroot = RpmSysinfo.get_buildroot
-contribdir = RpmSysinfo.get_go_contribdir
-importpath = RpmSysinfo.get_go_importpath
+# Exclude the existing contrib directory from GOPATH, otherwise there might be
+# incorrect requirements listed.
+tmpgopath=
+for entry in $(echo "${GOPATH}" | tr ':' '\n'); do
+  [[ -z "${entry}" || "${entry}" =~ 'contrib' ]] && continue
+  if [[ -z "${tmpgopath}" ]]; then
+    tmpgopath="${entry}"
+  else
+    tmpgopath="${tmpgopath}:${entry}"
+  fi
+done
+export GOPATH="${RPM_BUILD_ROOT}/usr/share/go/$(rpm --eval %go_api_ver)/contrib:${tmpgopath}"
+export GO15VENDOREXPERIMENT=1
 
-def go_get_version()
-  IO.popen("go version") do |process|
-    process.each_line do |l|
-      # "go version go1.6.1 linux/amd64"
-      version_re = /^go version go([0-9]\.[0-9])(\.[0-9])?\s+([^\/]+)\/(.*)$/
-      md = version_re.match(l.chomp)
-      # 1:"1.6" 2:".1" or nil 3:"linux" 4:"amd64"
-      return md[1] if md
-    end
-  end
-end
+IMPORT="$(cat /tmp/importpath.txt)"
 
-# read stdin for filelist rpm feeds us for a (sub) package
-filelist = []
-ARGF.each do |l|
-	# if line has "*.a"
-	# buildroot + go_contribdir + github.com/stretchr/testify/assert.a
-	if l.index(".a\n")
-		unless l.gsub(buildroot + contribdir + '/' + importpath,'').index(/test|example/)
-			filelist << l.strip!
-		end
-	end
-end
+while read INPUT; do
+  :
+done
 
-requires = []
+for SEGMENT in $(go list -f '{{range $deps := .Deps}}{{printf "%s\n" $deps}}{{end}}' ${IMPORT}/... | grep -v ${IMPORT} | sort -u); do
+  STANDARD=$(go list -f '{{if not .Standard}}{{.ImportPath}}{{end}}' ${SEGMENT} 2> /dev/null)
 
-unless filelist.empty? then
-
-	requires << "golang(API) = " + go_get_version()
-
-	filelist.each do |f|
-		# unarchive .a
-		system("ar -x #{f} __.PKGDEF")
-		# read imports
-		File.open("__.PKGDEF","r:UTF-8") do |f1|
-			f1.each do |l|
-				if l.index(/import\s/)
-					# import runtime "golang.org/x/net/uniform"
-					if ( l.index(/(\.com|\.net|\.org|gopkg\.in)/) && ! l.index(importpath) )
-						# import splice "github.com/hanwen/go-fuse/splice" // indirect
-						if l.index("indirect")
-							v = l.strip!.gsub(/\s\/\/\sindirect/,'').gsub(/"$/,'').gsub(/^.*"/,'')
-						else
-							v = l.strip!.gsub(/"$/,'').gsub(/^.*"/,'')
-						end
-						requires << "golang(" + v + ")"
-					end
-				end
-			end
-		end
-		# clean
-		File.delete("__.PKGDEF")
-	end
-
-	requires.each do |p|
-		puts p
-	end
-
-end
-
-end
+  if [[ $? -ne 0 || "${STANDARD}" != "" ]]; then
+    echo "golang(${SEGMENT})"
+  fi
+done
