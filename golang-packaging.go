@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 )
 
@@ -52,7 +53,7 @@ func copyDir(src, dst string) {
 				log.Fatalf("Non existent symlink target found: %s, quit.", symlink)
 			}
 
-			e := os.Remove(path)
+			e = os.Remove(path)
 			if e != nil {
 				log.Fatalf("Failed to remove %s", path)
 			}
@@ -116,7 +117,7 @@ func loadArg(arg string) string {
 }
 
 func storeArg(arg string, content string) {
-	path = filepath.Join("/tmp", arg)
+	path := filepath.Join("/tmp", arg)
 	// create it if doesn't exist
 	if _, e := os.Stat(path); os.IsNotExist(e) {
 		fd, e := os.Create(path)
@@ -484,8 +485,7 @@ func main() {
 	opts := os.Args
 	size := len(opts)
 	option := Option{}
-
-	var action, importpath, modifier, extraflags string
+	action := ""
 
 	supportedActions := map[string]func(){"arch": arch,
 		"prep":     prep,
@@ -511,7 +511,7 @@ func main() {
 			option.Importpath = opts[2]
 		}
 		if action == "test" || action == "build" {
-			option.Intialize(opts[2:])
+			option.Initialize(opts[2:])
 		}
 	}
 

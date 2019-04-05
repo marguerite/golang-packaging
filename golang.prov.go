@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
@@ -27,20 +28,20 @@ func loadArg(arg string) string {
 
 	if _, e := os.Stat(argFile); os.IsNotExist(e) {
 		fmt.Printf("FileNotExist%s", argFile)
-		panic()
+		panic(e)
 	}
 
 	fd, e := os.OpenFile(argFile, os.O_RDWR, 0644)
 	if e != nil {
 		fmt.Printf("PermissionErrorFailedToOpen%s", argFile)
-		panic()
+		panic(e)
 	}
 	defer fd.Close()
 
 	b, e := ioutil.ReadAll(fd)
 	if e != nil {
 		fmt.Printf("CouldNotReadContentOf%s", argFile)
-		panic()
+		panic(e)
 	}
 
 	return string(b)
