@@ -1,4 +1,8 @@
-# golang-packaging
+[![Go Report Card](https://goreportcard.com/badge/github.com/marguerite/golang-packaging)](https://goreportcard.com/report/github.com/marguerite/golang-packaging)
+
+golang-packaging
+
+------
 
 RPM macros and utilities for golang packaging.
 
