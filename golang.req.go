@@ -18,7 +18,7 @@ func goAbi() string {
 func loadArg(arg string) string {
 	supportedArgs := map[string]struct{}{"buildroot": {}, "importpath": {}}
 
-  // Error Messages have to one word, or RPM dependency generator will split it
+	// Error Messages have to one word, or RPM dependency generator will split it
 	if _, ok := supportedArgs[arg]; !ok {
 		panic("OnlySupportBuildrootOrImportpath")
 	}

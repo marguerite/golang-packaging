@@ -137,33 +137,27 @@ type Option struct {
 
 // Initialize intialize Option
 func (opt *Option) Initialize(args []string) {
-	idx := 0
-	other := []string{}
 	var importpath, modifier, extraflags string
 
 	// loop the args to find the first with "-"
+	idx := 0
+
 	for i, arg := range args {
-		re := regexp.MustCompile("-.*")
-		if re.MatchString(arg) {
+		if strings.HasPrefix(arg, "-") {
 			idx = i
 			break
 		}
 	}
 
 	// build the extraflags
-	if index > 0 {
-		for _, arg := range args[index:] {
+	if idx > 0 {
+		for _, arg := range args[idx:] {
 			extraflags += arg + " "
 		}
+		args = args[:idx]
 	}
 
-	if index > 0 {
-		other = args[:index]
-	} else {
-		other = args
-	}
-
-	for i, arg := range other {
+	for i, arg := range args {
 		if i == 0 {
 			// split importpath from modifiers
 			re := regexp.MustCompile(`(.*\/.*\/\w+)(.*)`)
@@ -194,6 +188,7 @@ func (opt *Option) Initialize(args []string) {
 	opt.Extraflags = extraflags
 }
 
+// Persistent save option to file
 func (opt Option) Persistent() {
 	for k, v := range map[string]string{"importpath": opt.Importpath, "modifier": opt.Modifier, "extraflags": opt.Extraflags} {
 		if len(v) > 0 {
