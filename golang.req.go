@@ -23,9 +23,13 @@ func main() {
 	opt.Load()
 	options := []string{"-f", `'{{range $deps := .Deps}}{{printf "%s\n" $deps}}{{end}}'`, opt.ImportPath + "/..."}
 	re := regexp.MustCompile(regexp.QuoteMeta(opt.ImportPath))
+	r := strings.NewReplacer("'", "", " ", "")
 	for _, i := range strings.Split(common.Exec(options, opt), "\n") {
-		if !re.MatchString(i) && !strings.Contains(i, "matched no packages") && !isStdLib(i, opt) {
-			fmt.Println("golang(" + i + ")")
+		if !re.MatchString(i) && !strings.Contains(i, "matched no packages") {
+			i = r.Replace(i)
+			if !isStdLib(i, opt) && len(i) > 0 {
+				fmt.Println("golang(" + i + ")")
+			}
 		}
 	}
 }

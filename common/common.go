@@ -121,6 +121,10 @@ func CopyFile(src, dst string) {
 	}
 	defer sd.Close()
 
+	if _, e := os.Stat(dst); !os.IsNotExist(e) {
+		dst = filepath.Join(dst, filepath.Base(src))
+	}
+
 	fd, e := os.Create(dst)
 	if e != nil {
 		log.Fatalf("Failed to create %s file descriptor", dst)

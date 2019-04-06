@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 func goBuild(command string, options []string, path string, opt option.Option) {
@@ -21,6 +22,7 @@ func goBuild(command string, options []string, path string, opt option.Option) {
 
 	var outBuf, errBuf bytes.Buffer
 	var errOut, errErr error
+	var wg sync.WaitGroup
 
 	cmd := exec.Command("/usr/bin/go", flags...)
 	env := append(os.Environ(), "GOPATH="+opt.BuildPath+":"+opt.BuildContrib)
@@ -36,14 +38,15 @@ func goBuild(command string, options []string, path string, opt option.Option) {
 	err := io.MultiWriter(os.Stderr, &errBuf)
 
 	cmd.Start()
+	wg.Add(1)
 
 	go func() {
 		_, errOut = io.Copy(out, outIn)
+		wg.Done()
 	}()
 
-	go func() {
-		_, errErr = io.Copy(err, errIn)
-	}()
+	_, errErr = io.Copy(err, errIn)
+	wg.Wait()
 
 	cmd.Wait()
 
@@ -55,10 +58,8 @@ func goBuild(command string, options []string, path string, opt option.Option) {
 		log.Fatalf("Failed to capture stderr %s", errErr)
 	}
 
-	outStr := string(outBuf.Bytes())
-	errStr := string(errBuf.Bytes())
-	fmt.Println(outStr)
-	fmt.Println(errStr)
+	fmt.Println(string(outBuf.Bytes()))
+	fmt.Println(string(errBuf.Bytes()))
 }
 
 func fileGlob(path string) []string {
