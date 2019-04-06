@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,50 +19,58 @@ import (
 func copyDir(src, dst string) {
 	log.Printf("Copying all files and directories from %s to %s...", src, dst)
 
-	if _, e := os.Stat(src); os.IsNotExist(e) {
-		log.Fatalf("%s doesn't not exist.", src)
-	}
-
 	if _, e := os.Stat(dst); e != nil {
 		log.Printf("%s doesn't exist, making...", dst)
 		os.MkdirAll(dst, 0755)
 	}
 
-	filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-		file := filepath.Base(path)
-		if info.Mode().IsRegular() {
-			copyFile(path, filepath.Join(dst, file))
-		}
-		if info.Mode().IsDir() {
-			copyDir(path, filepath.Join(dst, file))
-		}
-		if info.Mode()&os.ModeSymlink != 0 {
-			symlink, e := os.Readlink(path)
-			if e != nil {
-				log.Fatalf("Could not follow %s's symlink", path)
-			}
+	sd, e := os.Open(src)
+	if e != nil {
+		log.Fatalf("%s doesn't exist, making...")
+	}
 
-			// make absolute symlink
-			if !filepath.IsAbs(symlink) {
-				log.Printf("Non-absolute symlink found: %s", symlink)
-				log.Println("Converting to absolute path")
-				symlink = filepath.Join(filepath.Dir(path), symlink)
-			}
+	files, e := sd.Readdirnames(-1)
+	if e != nil {
+		log.Fatalf("Failed to read all files and directories for %s, read %v.", src, files)
+	}
 
-			// non existent symlink target
-			if _, e := os.Stat(symlink); os.IsNotExist(e) {
-				log.Fatalf("Non existent symlink target found: %s, quit.", symlink)
+	for _, f := range files {
+		filepath.Walk(f, func(path string, info os.FileInfo, err error) error {
+			file := filepath.Base(path)
+			if info.Mode().IsRegular() {
+				copyFile(path, filepath.Join(dst, file))
 			}
-
-			e = os.Remove(path)
-			if e != nil {
-				log.Fatalf("Failed to remove %s", path)
+			if info.Mode().IsDir() {
+				copyDir(path, filepath.Join(dst, file))
 			}
+			if info.Mode()&os.ModeSymlink != 0 {
+				symlink, e := os.Readlink(path)
+				if e != nil {
+					log.Fatalf("Could not follow %s's symlink", path)
+				}
 
-			copyFile(symlink, filepath.Join(dst, file))
-		}
-		return nil
-	})
+				// make absolute symlink
+				if !filepath.IsAbs(symlink) {
+					log.Printf("Non-absolute symlink found: %s", symlink)
+					log.Println("Converting to absolute path")
+					symlink = filepath.Join(filepath.Dir(path), symlink)
+				}
+
+				// non existent symlink target
+				if _, e := os.Stat(symlink); os.IsNotExist(e) {
+					log.Fatalf("Non existent symlink target found: %s, quit.", symlink)
+				}
+
+				e = os.Remove(path)
+				if e != nil {
+					log.Fatalf("Failed to remove %s", path)
+				}
+
+				copyFile(symlink, filepath.Join(dst, file))
+			}
+			return nil
+		})
+	}
 }
 
 func copyFile(src, dst string) {
@@ -136,8 +145,8 @@ type Option struct {
 	Extraflags string
 }
 
-// Initialize intialize Option
-func (opt *Option) Initialize(args []string) {
+// Fill fill up Option
+func (opt *Option) Fill(args []string) {
 	var importpath, modifier, extraflags string
 
 	// loop the args to find the first with "-"
@@ -184,17 +193,27 @@ func (opt *Option) Initialize(args []string) {
 		}
 	}
 
-	opt.Importpath = importpath
-	opt.Modifier = modifier
-	opt.Extraflags = extraflags
+	if len(importpath) > 0 {
+		opt.Importpath = importpath
+	}
+	if len(modifier) > 0 {
+		opt.Modifier = modifier
+	}
+	if len(extraflags) > 0 {
+		opt.Extraflags = extraflags
+	}
 }
 
-// Persistent save option to file
-func (opt Option) Persistent() {
-	for k, v := range map[string]string{"importpath": opt.Importpath, "modifier": opt.Modifier, "extraflags": opt.Extraflags} {
-		if len(v) > 0 {
-			storeArg(k, v)
-		}
+// Save save option to file
+func (opt Option) Save() {
+	f, _ := json.Marshal(&opt)
+	ioutil.WriteFile("/tmp/golang.json", f, 0644)
+}
+
+// Load load options from file
+func (opt *Option) Load() {
+	if f, e := ioutil.ReadFile("/tmp/golang.json"); e == nil {
+		json.Unmarshal(f, &opt)
 	}
 }
 
@@ -485,6 +504,7 @@ func main() {
 	opts := os.Args
 	size := len(opts)
 	option := Option{}
+	option.Load()
 	action := ""
 
 	supportedActions := map[string]func(){"arch": arch,
@@ -511,7 +531,7 @@ func main() {
 			option.Importpath = opts[2]
 		}
 		if action == "test" || action == "build" {
-			option.Initialize(opts[2:])
+			option.Fill(opts[2:])
 		}
 	}
 
@@ -519,7 +539,7 @@ func main() {
 		log.Fatalf("%s is not a supported action.", action)
 	}
 
-	option.Persistent()
+	option.Save()
 
 	supportedActions[action]()
 }
