@@ -2,10 +2,10 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
+	"github.com/marguerite/golang-packaging/common"
+	"github.com/marguerite/golang-packaging/option"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -16,217 +16,18 @@ import (
 	"strings"
 )
 
-func copyDir(src, dst string) {
-	log.Printf("Copying all files and directories from %s to %s...", src, dst)
-
-	if _, e := os.Stat(dst); e != nil {
-		log.Printf("%s doesn't exist, making...", dst)
-		os.MkdirAll(dst, 0755)
-	}
-
-	sd, e := os.Open(src)
-	if e != nil {
-		log.Fatalf("%s doesn't exist, making...")
-	}
-
-	files, e := sd.Readdirnames(-1)
-	if e != nil {
-		log.Fatalf("Failed to read all files and directories for %s, read %v.", src, files)
-	}
-
-	for _, f := range files {
-		filepath.Walk(f, func(path string, info os.FileInfo, err error) error {
-			file := filepath.Base(path)
-			if info.Mode().IsRegular() {
-				copyFile(path, filepath.Join(dst, file))
-			}
-			if info.Mode().IsDir() {
-				copyDir(path, filepath.Join(dst, file))
-			}
-			if info.Mode()&os.ModeSymlink != 0 {
-				symlink, e := os.Readlink(path)
-				if e != nil {
-					log.Fatalf("Could not follow %s's symlink", path)
-				}
-
-				// make absolute symlink
-				if !filepath.IsAbs(symlink) {
-					log.Printf("Non-absolute symlink found: %s", symlink)
-					log.Println("Converting to absolute path")
-					symlink = filepath.Join(filepath.Dir(path), symlink)
-				}
-
-				// non existent symlink target
-				if _, e := os.Stat(symlink); os.IsNotExist(e) {
-					log.Fatalf("Non existent symlink target found: %s, quit.", symlink)
-				}
-
-				e = os.Remove(path)
-				if e != nil {
-					log.Fatalf("Failed to remove %s", path)
-				}
-
-				copyFile(symlink, filepath.Join(dst, file))
-			}
-			return nil
-		})
-	}
-}
-
-func copyFile(src, dst string) {
-	sd, e := os.Open(src)
-	if e != nil {
-		log.Fatalf("Failed to open %s file descriptor", src)
-	}
-	defer sd.Close()
-
-	fd, e := os.Create(dst)
-	if e != nil {
-		log.Fatalf("Failed to create %s file descriptor", dst)
-	}
-	defer fd.Close()
-
-	_, e = io.Copy(fd, sd)
-	if e != nil {
-		log.Fatalf("Failed to copy %s to %s", src, dst)
-	}
-
-	mode, _ := os.Stat(src)
-	e = os.Chmod(dst, mode.Mode())
-	if e != nil {
-		log.Fatalf("Failed to sync file permissions from %s to %s", src, dst)
-	}
-}
-
-func loadArg(arg string) string {
-	supportedArgs := map[string]struct{}{"importpath": {}, "modifier": {}, "extraflags": {}}
-
-	if _, ok := supportedArgs[arg]; !ok {
-		log.Fatal("Only support: importpath, modifier, extraflags")
-	}
-
-	argFile := filepath.Join("/tmp", arg)
-
-	if _, e := os.Stat(argFile); os.IsNotExist(e) {
-		log.Fatalf("Failed to read %s. Is it there?", argFile)
-	}
-
-	fd, e := os.OpenFile(argFile, os.O_RDWR, 0644)
-	if e != nil {
-		log.Fatalf("Failed to open %s, please check its permission.", argFile)
-	}
-	defer fd.Close()
-
-	b, e := ioutil.ReadAll(fd)
-	if e != nil {
-		log.Fatalf("Could not read content of %s", argFile)
-	}
-
-	return string(b)
-}
-
-func storeArg(arg string, content string) {
-	path := filepath.Join("/tmp", arg)
-	// create it if doesn't exist
-	if _, e := os.Stat(path); os.IsNotExist(e) {
-		fd, e := os.Create(path)
-		if e != nil {
-			log.Fatalf("Could not create %s", path)
-		}
-		defer fd.Close()
-		fd.WriteString(content)
-	}
-}
-
-// Option command link options
-type Option struct {
-	Importpath string
-	Modifier   string
-	Extraflags string
-}
-
-// Fill fill up Option
-func (opt *Option) Fill(args []string) {
-	var importpath, modifier, extraflags string
-
-	// loop the args to find the first with "-"
-	idx := 0
-
-	for i, arg := range args {
-		if strings.HasPrefix(arg, "-") {
-			idx = i
-			break
-		}
-	}
-
-	// build the extraflags
-	if idx > 0 {
-		for _, arg := range args[idx:] {
-			extraflags += arg + " "
-		}
-		args = args[:idx]
-	}
-
-	for i, arg := range args {
-		if i == 0 {
-			// split importpath from modifiers
-			re := regexp.MustCompile(`(.*\/.*\/\w+)(.*)`)
-			m := re.FindStringSubmatch(arg)
-			if len(m) > 0 {
-				importpath = m[1]
-				modifier = m[2]
-			} else {
-				modifier = arg
-			}
-		} else {
-			// "foo ..." equals to "foo..."
-			re := regexp.MustCompile(`.*\w$`)
-			if re.MatchString(modifier) && arg == "..." {
-				modifier += arg
-				// "foo bar ... baz" should be kept while bar in "foo ... bar" should be ignored
-				if i == 1 {
-					break
-				}
-			} else {
-				modifier += " " + arg
-			}
-		}
-	}
-
-	if len(importpath) > 0 {
-		opt.Importpath = importpath
-	}
-	if len(modifier) > 0 {
-		opt.Modifier = modifier
-	}
-	if len(extraflags) > 0 {
-		opt.Extraflags = extraflags
-	}
-}
-
-// Save save option to file
-func (opt Option) Save() {
-	f, _ := json.Marshal(&opt)
-	ioutil.WriteFile("/tmp/golang.json", f, 0644)
-}
-
-// Load load options from file
-func (opt *Option) Load() {
-	if f, e := ioutil.ReadFile("/tmp/golang.json"); e == nil {
-		json.Unmarshal(f, &opt)
-	}
-}
-
-func goBuild(command string, options []string, path string) {
+func goBuild(command string, options []string, path string, opt option.Option) {
 	flags := append(append([]string{command}, options...), []string{path}...)
 
 	var outBuf, errBuf bytes.Buffer
 	var errOut, errErr error
 
 	cmd := exec.Command("/usr/bin/go", flags...)
-	env := append(os.Environ(), "GOPATH="+buildPath()+":"+buildContrib())
-	env = append(env, "GOBIN="+buildBin())
+	env := append(os.Environ(), "GOPATH="+opt.BuildPath+":"+opt.BuildContrib)
+	env = append(env, "GOBIN="+opt.BuildBin)
 	cmd.Env = env
+
+	log.Printf("Command: GOPATH=%s GOBIN=%s /usr/bin/go %s", opt.BuildPath+":"+opt.BuildContrib, opt.BuildBin, strings.Join(flags, " "))
 
 	outIn, _ := cmd.StdoutPipe()
 	errIn, _ := cmd.StderrPipe()
@@ -246,8 +47,12 @@ func goBuild(command string, options []string, path string) {
 
 	cmd.Wait()
 
-	if errOut != nil || errErr != nil {
-		log.Fatal("failed to capture stdout or stderr")
+	if errOut != nil {
+		log.Fatalf("Failed to capture stdout %s", errOut)
+	}
+
+	if errErr != nil {
+		log.Fatalf("Failed to capture stderr %s", errErr)
 	}
 
 	outStr := string(outBuf.Bytes())
@@ -290,70 +95,16 @@ func goVersionGreaterThan(v1, v2 string) bool {
 	return versions[0] > versions[1]
 }
 
-func buildRoot() string {
-	storeArg("buildroot", os.Getenv("RPM_BUILD_ROOT"))
-	return os.Getenv("RPM_BUILD_ROOT")
-}
-
-func buildDir() string {
-	return os.Getenv("RPM_BUILD_DIR")
-}
-
-func goAbi() string {
-	re := regexp.MustCompile(`go(\d+\.\d+).*`) // go1.8.3
-	return re.FindStringSubmatch(runtime.Version())[1]
-}
-
-func libDir() string {
-	out, e := exec.Command("rpm", "--eval", "%_libdir").Output()
-	if e != nil {
-		log.Fatal("Failed to call 'rpm --eval %_libdir', is rpm installed?")
-	}
-	return string(out)
-}
-
-func contribDir() string {
-	return libDir() + "/go/" + goAbi() + "/contrib/pkg/linux_" + runtime.GOARCH
-}
-
-func toolDir() string {
-	return "/usr/share/go/" + goAbi() + "/pkg/tool/linux_" + runtime.GOARCH
-}
-
-func contribSrcDir() string {
-	return "/usr/share/go/" + goAbi() + "/contrib/src"
-}
-
-func buildPath() string {
-	return buildDir() + "/go"
-}
-
-func buildContrib() string {
-	return buildDir() + "/contrib"
-}
-
-func buildSrc() string {
-	return buildContrib() + "/src"
-}
-
-func buildBin() string {
-	return buildPath() + "/bin"
-}
-
-func destPath() string {
-	return buildPath() + "/src/" + loadArg("importpath")
-}
-
 func arch() {
 	fmt.Println(runtime.GOARCH)
 }
 
-func prep() {
-	dirs := []string{destPath(), buildSrc(),
-		buildRoot() + contribDir(),
-		buildRoot() + contribSrcDir(),
-		buildRoot() + toolDir(),
-		buildRoot() + "/usr/bin"}
+func prep(opt option.Option) {
+	dirs := []string{opt.DestPath, opt.BuildSrc,
+		filepath.Join(opt.BuildRoot, common.ContribDir()),
+		filepath.Join(opt.BuildRoot, common.ContribSrcDir()),
+		filepath.Join(opt.BuildRoot, common.ToolDir()),
+		filepath.Join(opt.BuildRoot, "/usr/bin")}
 	// make dirs
 	for _, d := range dirs {
 		log.Println("Creating " + d)
@@ -366,11 +117,11 @@ func prep() {
 	// copy files
 	currentDir, _ := os.Getwd()
 
-	copyDir(currentDir, destPath())
-	copyDir(contribSrcDir(), buildSrc())
+	common.CopyDir(currentDir, opt.DestPath)
+	common.CopyDir(common.ContribSrcDir(), opt.BuildSrc)
 }
 
-func build() {
+func build(opt option.Option) {
 	buildFlags := []string{"-v", "-p", "4", "-x", "-buildmode=pie"}
 	// Add s flag if go is older than 1.10.
 	// s flag is an openSUSE flag to fix
@@ -385,18 +136,15 @@ func build() {
 
 	var extra []string
 	var modifiers []string
-	importpath := loadArg("importpath")
-	extraFlags := loadArg("extraflags")
-	modifier := loadArg("modifier")
 
-	if strings.Contains(modifier, " ") {
-		modifiers = strings.Split(modifier, " ")
+	if strings.Contains(opt.Modifier, " ") {
+		modifiers = strings.Split(opt.Modifier, " ")
 	} else {
-		modifiers = []string{modifier}
+		modifiers = []string{opt.Modifier}
 	}
 
-	if len(extraFlags) > 0 {
-		extra = strings.Split(extraFlags, " ")
+	if len(opt.ExtraFlags) > 0 {
+		extra = strings.Split(opt.ExtraFlags, " ")
 	}
 
 	args := append(buildFlags, extra...)
@@ -404,58 +152,52 @@ func build() {
 	for _, modifier := range modifiers {
 		path := ""
 		if modifier == "..." || modifier == "/..." {
-			path = importpath + modifier
+			path = opt.ImportPath + modifier
 		} else {
-			path = importpath + "/" + modifier
+			path = opt.ImportPath + "/" + modifier
 		}
 
-		goBuild("install", args, path)
+		goBuild("install", args, path, opt)
 	}
 }
 
-func install() {
-	binaries, _ := filepath.Glob(buildBin() + "/*")
+func install(opt option.Option) {
+	binaries, _ := filepath.Glob(opt.BuildBin + "/*")
 
 	if len(binaries) > 0 {
 		for _, bin := range binaries {
 			fmt.Println("Copying " + bin)
-			copyFile(bin, buildRoot()+"/usr/bin")
+			common.CopyFile(bin, filepath.Join(opt.BuildRoot, "/usr/bin"))
 		}
 	}
 }
 
-func source() {
-	files := fileGlob(buildPath() + "/src")
-	re := regexp.MustCompile(buildPath() + "/src" + `(.*)$`)
+func source(opt option.Option) {
+	re := regexp.MustCompile(opt.BuildPath + "/src" + `(.*)$`)
+	files := fileGlob(opt.BuildPath + "/src")
 	for _, f := range files {
-		dest := buildRoot() + contribSrcDir() + re.FindStringSubmatch(f)[1]
+		dest := opt.BuildRoot + common.ContribSrcDir() + re.FindStringSubmatch(f)[1]
 
 		if _, e := os.Stat(filepath.Dir(dest)); e != nil {
 			os.MkdirAll(filepath.Dir(dest), 0755)
 		}
 
-		fmt.Println(f)
-		fmt.Println(dest)
-		copyFile(f, dest)
+		common.CopyFile(f, dest)
 	}
 }
 
-func test() {
+func test(opt option.Option) {
 	var extra []string
 	var modifiers []string
 
-	importpath := loadArg("importpath")
-	extraFlags := loadArg("extraflags")
-	modifier := loadArg("modifier")
-
-	if strings.Contains(modifier, " ") {
-		modifiers = strings.Split(modifier, " ")
+	if strings.Contains(opt.Modifier, " ") {
+		modifiers = strings.Split(opt.Modifier, " ")
 	} else {
-		modifiers = []string{modifier}
+		modifiers = []string{opt.Modifier}
 	}
 
-	if len(extraFlags) > 0 {
-		extra = strings.Split(extraFlags, " ")
+	if len(opt.ExtraFlags) > 0 {
+		extra = strings.Split(opt.ExtraFlags, " ")
 	}
 
 	args := append(extra, "-x")
@@ -463,32 +205,40 @@ func test() {
 	for _, modifier := range modifiers {
 		var path string
 		if modifier == "..." || modifier == "/..." {
-			path = importpath + modifier
+			path = opt.ImportPath + modifier
 		} else {
-			path = importpath + "/" + modifier
+			path = opt.ImportPath + "/" + modifier
 		}
 
-		goBuild("test", args, path)
+		goBuild("test", args, path, opt)
 	}
 }
 
-func filelist() {
+func filelist(opt option.Option) {
 	// list everything under buildroot
 	var list []string
-	filepath.Walk(buildRoot(), func(path string, info os.FileInfo, err error) error {
-		re := regexp.MustCompile(regexp.QuoteMeta(buildRoot()) + `(.*)$`)
-		fmt.Println(re.FindStringSubmatch(path))
+	filepath.Walk(opt.BuildRoot, func(path string, info os.FileInfo, err error) error {
+		re := regexp.MustCompile(regexp.QuoteMeta(opt.BuildRoot) + `(.*)$`)
 		if len(re.FindStringSubmatch(path)) > 1 {
+			p := re.FindStringSubmatch(path)[1]
 			if info.IsDir() {
-				list = append(list, "%dir "+re.FindStringSubmatch(path)[1])
+				fmt.Printf("%%dir %s", p)
+				list = append(list, "%dir "+p)
 			} else {
-				list = append(list, re.FindStringSubmatch(path)[1])
+				fmt.Println(p)
+				list = append(list, p)
 			}
 		}
 		return nil
 	})
 
-	fd, _ := os.Create("file.lst")
+	cwd, _ := os.Getwd()
+	path := filepath.Join(cwd, "file.list")
+
+	fd, e := os.Create(path)
+	if e != nil {
+		log.Fatalf("Failed to create file.list in %s", cwd)
+	}
 	defer fd.Close()
 
 	for _, entry := range list {
@@ -497,49 +247,71 @@ func filelist() {
 }
 
 func godoc() {
-	fmt.Println("We should generate proper godocs!")
+	log.Println("We should generate proper godocs!")
 }
 
 func main() {
-	opts := os.Args
-	size := len(opts)
-	option := Option{}
-	option.Load()
-	action := ""
+	args := os.Args
+	size := len(args)
+	opt := option.Option{}
+	opt.Load()
 
-	supportedActions := map[string]func(){"arch": arch,
-		"prep":     prep,
-		"build":    build,
-		"install":  install,
-		"source":   source,
-		"test":     test,
-		"filelist": filelist,
-		"godoc":    godoc}
+	if len(opt.BuildRoot) == 0 {
+		opt.BuildRoot = os.Getenv("RPM_BUILD_ROOT")
+	}
+
+	if len(opt.BuildDir) == 0 {
+		opt.BuildDir = os.Getenv("RPM_BUILD_DIR")
+	}
+
+	opt.BuildPath = filepath.Join(opt.BuildDir, "go")
+	opt.BuildContrib = filepath.Join(opt.BuildDir, "contrib")
+	opt.BuildSrc = filepath.Join(opt.BuildContrib, "src")
+	opt.BuildBin = filepath.Join(opt.BuildPath, "bin")
+
+	action := ""
 
 	if size == 1 {
 		// print help
-		fmt.Println("Please specify a valid metho: arch, prep, build, install, source, test, filelist, godoc")
+		log.Println("Please specify a valid method: arch, prep, build, install, source, test, filelist, godoc")
 	}
 
 	if size == 2 {
-		action = opts[1]
+		action = args[1]
 	}
 
 	if size > 2 {
-		action = opts[1]
+		action = args[1]
 		if action == "prep" {
-			option.Importpath = opts[2]
+			opt.ImportPath = args[2]
 		}
 		if action == "test" || action == "build" {
-			option.Fill(opts[2:])
+			opt.Fill(args[2:])
 		}
 	}
 
-	if _, ok := supportedActions[action]; !ok {
+	opt.DestPath = filepath.Join(opt.BuildPath, "/src/"+opt.ImportPath)
+
+	switch action {
+	case "arch":
+		arch()
+	case "prep":
+		prep(opt)
+	case "build":
+		build(opt)
+	case "install":
+		install(opt)
+	case "source":
+		source(opt)
+	case "test":
+		test(opt)
+	case "filelist":
+		filelist(opt)
+	case "godoc":
+		godoc()
+	default:
 		log.Fatalf("%s is not a supported action.", action)
 	}
 
-	option.Save()
-
-	supportedActions[action]()
+	opt.Save()
 }
