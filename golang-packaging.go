@@ -29,7 +29,7 @@ func goBuild(command string, options []string, path string, opt option.Option) {
 	env = append(env, "GOBIN="+opt.BuildBin)
 	cmd.Env = env
 
-	log.Printf("Command: GOPATH=%s GOBIN=%s /usr/bin/go %s", opt.BuildPath+":"+opt.BuildContrib, opt.BuildBin, strings.Join(flags, " "))
+	log.Printf("Command: GOPATH=%s GOBIN=%s /usr/bin/go %s\n", opt.BuildPath+":"+opt.BuildContrib, opt.BuildBin, strings.Join(flags, " "))
 
 	outIn, _ := cmd.StdoutPipe()
 	errIn, _ := cmd.StderrPipe()
@@ -62,7 +62,7 @@ func goBuild(command string, options []string, path string, opt option.Option) {
 	fmt.Println(string(errBuf.Bytes()))
 }
 
-func fileGlob(path string) []string {
+func sourceFileFilter(path string) []string {
 	var list []string
 	filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		re := regexp.MustCompile(`\.(go|h|c|s)$`)
@@ -108,10 +108,7 @@ func prep(opt option.Option) {
 		filepath.Join(opt.BuildRoot, "/usr/bin")}
 	// make dirs
 	for _, d := range dirs {
-		log.Println("Creating " + d)
-		if _, e := os.Stat(d); e == nil {
-			os.Remove(d)
-		}
+		fmt.Println("Creating " + d)
 		os.MkdirAll(d, 0755)
 	}
 
@@ -167,22 +164,23 @@ func install(opt option.Option) {
 
 	if len(binaries) > 0 {
 		for _, bin := range binaries {
-			fmt.Println("Copying " + bin)
-			common.CopyFile(bin, filepath.Join(opt.BuildRoot, "/usr/bin"))
+			dest := filepath.Join(opt.BuildRoot, "/usr/bin")
+			fmt.Printf("Copying %s to %s\n", bin, dest)
+			common.CopyFile(bin, dest)
 		}
 	}
 }
 
 func source(opt option.Option) {
 	re := regexp.MustCompile(opt.BuildPath + "/src" + `(.*)$`)
-	files := fileGlob(opt.BuildPath + "/src")
+	files := sourceFileFilter(opt.BuildPath + "/src")
 	for _, f := range files {
 		dest := opt.BuildRoot + common.ContribSrcDir() + re.FindStringSubmatch(f)[1]
 
-		if _, e := os.Stat(filepath.Dir(dest)); e != nil {
+		if _, e := os.Stat(filepath.Dir(dest)); os.IsNotExist(e) {
 			os.MkdirAll(filepath.Dir(dest), 0755)
 		}
-
+		fmt.Printf("Copying %s to %s\n", f, dest)
 		common.CopyFile(f, dest)
 	}
 }
@@ -202,7 +200,6 @@ func test(opt option.Option) {
 	}
 
 	args := append(extra, "-x")
-
 	for _, modifier := range modifiers {
 		var path string
 		if modifier == "..." || modifier == "/..." {
@@ -210,7 +207,6 @@ func test(opt option.Option) {
 		} else {
 			path = opt.ImportPath + "/" + modifier
 		}
-
 		goBuild("test", args, path, opt)
 	}
 }
@@ -223,7 +219,7 @@ func filelist(opt option.Option) {
 		if len(re.FindStringSubmatch(path)) > 1 {
 			p := re.FindStringSubmatch(path)[1]
 			if info.IsDir() {
-				fmt.Printf("%%dir %s", p)
+				fmt.Printf("%%dir %s\n", p)
 				list = append(list, "%dir "+p)
 			} else {
 				fmt.Println(p)
@@ -248,7 +244,7 @@ func filelist(opt option.Option) {
 }
 
 func godoc() {
-	log.Println("We should generate proper godocs!")
+	fmt.Println("We should generate proper godocs!")
 }
 
 func main() {
@@ -274,7 +270,8 @@ func main() {
 
 	if size == 1 {
 		// print help
-		log.Println("Please specify a valid method: arch, prep, build, install, source, test, filelist, godoc")
+		fmt.Println("Please specify a valid method: arch, prep, build, install, source, test, filelist, godoc")
+		os.Exit(0)
 	}
 
 	if size == 2 {
@@ -287,6 +284,7 @@ func main() {
 			opt.ImportPath = args[2]
 		}
 		if action == "test" || action == "build" {
+			fmt.Println(args[2:])
 			opt.Fill(args[2:])
 		}
 	}
