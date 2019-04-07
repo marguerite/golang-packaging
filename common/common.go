@@ -1,6 +1,7 @@
 package common
 
 import (
+	"fmt"
 	"github.com/marguerite/golang-packaging/option"
 	"io"
 	"log"
@@ -16,7 +17,8 @@ func goAbi() string {
 	return re.FindStringSubmatch(runtime.Version())[1]
 }
 
-func Exec(options []string, opt option.Option) string {
+// GoList run `go list` with env and options
+func GoList(options []string, opt option.Option) string {
 	flags := append([]string{"list"}, options...)
 
 	cmd := exec.Command("/usr/bin/go", flags...)
@@ -33,9 +35,8 @@ func goPath(opt option.Option) string {
 	return opt.BuildRoot + "/usr/share/go/" + goAbi() + "/contrib" + ":" + opt.BuildPath
 }
 
-func Skeleton(args []string) {
-	// read from stdin to not cause a broken pipe
-}
+// ReadStdin read from stdin to avoid a broken pipe
+func ReadStdin(args []string) {}
 
 func libDir() string {
 	out, e := exec.Command("rpm", "--eval", "%_libdir").Output()
@@ -45,23 +46,27 @@ func libDir() string {
 	return string(out)
 }
 
+// ContribDir go contrib dir
 func ContribDir() string {
 	return libDir() + "/go/" + goAbi() + "/contrib/pkg/linux_" + runtime.GOARCH
 }
 
+// ToolDir go tool dir
 func ToolDir() string {
 	return "/usr/share/go/" + goAbi() + "/pkg/tool/linux_" + runtime.GOARCH
 }
 
+// ContribSrcDir go contrib src dir
 func ContribSrcDir() string {
 	return "/usr/share/go/" + goAbi() + "/contrib/src"
 }
 
+// CopyDir copy files in a directory
 func CopyDir(src, dst string) {
-	log.Printf("Copying all files and directories from %s to %s...", src, dst)
+	fmt.Printf("Copying all files and directories from %s to %s...", src, dst)
 
 	if _, e := os.Stat(dst); e != nil {
-		log.Printf("%s doesn't exist, making...", dst)
+		fmt.Printf("%s doesn't exist, making...", dst)
 		os.MkdirAll(dst, 0755)
 	}
 
@@ -92,8 +97,8 @@ func CopyDir(src, dst string) {
 
 				// make absolute symlink
 				if !filepath.IsAbs(symlink) {
-					log.Printf("Non-absolute symlink found: %s", symlink)
-					log.Println("Converting to absolute path")
+					fmt.Printf("Non-absolute symlink found: %s", symlink)
+					fmt.Println("Converting to absolute path")
 					symlink = filepath.Join(filepath.Dir(path), symlink)
 				}
 
@@ -114,6 +119,7 @@ func CopyDir(src, dst string) {
 	}
 }
 
+// CopyFile copy a file
 func CopyFile(src, dst string) {
 	sd, e := os.Open(src)
 	if e != nil {

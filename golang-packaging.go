@@ -120,7 +120,7 @@ func prep(opt option.Option) {
 }
 
 func build(opt option.Option) {
-	buildFlags := []string{"-v", "-p", "4", "-x", "-buildmode=pie"}
+	buildFlags := []string{"-v", "-p", "4", "-x"}
 	// Add s flag if go is older than 1.10.
 	// s flag is an openSUSE flag to fix
 	// https://bugzilla.suse.com/show_bug.cgi?id=776058
@@ -130,6 +130,11 @@ func build(opt option.Option) {
 	// s flag has been removed from the openSUSE packages.
 	if !goVersionGreaterThan(runtimeGoVersion(), "1.10.0") {
 		buildFlags = append(buildFlags, "-s")
+	}
+
+	if len(opt.BuildMode) == 0 {
+		// defaults to "-buildmode=pie"
+		buildFlags = append(buildFlags, "-buildmode=pie")
 	}
 
 	var extra []string
@@ -249,9 +254,20 @@ func godoc() {
 
 func main() {
 	args := os.Args
-	size := len(args)
+
+	if len(args) == 1 {
+		// print help
+		fmt.Println("Please specify a valid method: arch, prep, build, install, source, test, filelist, godoc")
+		os.Exit(0)
+	}
+
+  //action := args[1]
+
 	opt := option.Option{}
 	opt.Load()
+	if len(args) >= 2 {
+    opt.Parse(args[2:])
+	}
 
 	if len(opt.BuildRoot) == 0 {
 		opt.BuildRoot = os.Getenv("RPM_BUILD_ROOT")
@@ -265,33 +281,10 @@ func main() {
 	opt.BuildContrib = filepath.Join(opt.BuildDir, "contrib")
 	opt.BuildSrc = filepath.Join(opt.BuildContrib, "src")
 	opt.BuildBin = filepath.Join(opt.BuildPath, "bin")
-
-	action := ""
-
-	if size == 1 {
-		// print help
-		fmt.Println("Please specify a valid method: arch, prep, build, install, source, test, filelist, godoc")
-		os.Exit(0)
-	}
-
-	if size == 2 {
-		action = args[1]
-	}
-
-	if size > 2 {
-		action = args[1]
-		if action == "prep" {
-			opt.ImportPath = args[2]
-		}
-		if action == "test" || action == "build" {
-			fmt.Println(args[2:])
-			opt.Fill(args[2:])
-		}
-	}
-
 	opt.DestPath = filepath.Join(opt.BuildPath, "/src/"+opt.ImportPath)
+  opt.Save()
 
-	switch action {
+	/*switch action {
 	case "arch":
 		arch()
 	case "prep":
@@ -310,7 +303,5 @@ func main() {
 		godoc()
 	default:
 		log.Fatalf("%s is not a supported action.", action)
-	}
-
-	opt.Save()
+	}*/
 }
