@@ -132,35 +132,23 @@ func build(opt option.Option) {
 		buildFlags = append(buildFlags, "-s")
 	}
 
-	if len(opt.BuildMode) == 0 {
-		// defaults to "-buildmode=pie"
-		buildFlags = append(buildFlags, "-buildmode=pie")
-	}
+	buildFlags = append(buildFlags, opt.BuildMode)
 
-	var extra []string
-	var modifiers []string
+	args := append(buildFlags, opt.ExtraFlags...)
 
-	if strings.Contains(opt.Modifier, " ") {
-		modifiers = strings.Split(opt.Modifier, " ")
-	} else {
-		modifiers = []string{opt.Modifier}
-	}
+	if len(opt.Modifiers) > 0 {
+		for _, modifier := range opt.Modifiers {
+			path := ""
+			if modifier == "..." {
+				path = opt.ImportPath + modifier
+			} else {
+				path = opt.ImportPath + "/" + modifier
+			}
 
-	if len(opt.ExtraFlags) > 0 {
-		extra = strings.Split(opt.ExtraFlags, " ")
-	}
-
-	args := append(buildFlags, extra...)
-
-	for _, modifier := range modifiers {
-		path := ""
-		if modifier == "..." || modifier == "/..." {
-			path = opt.ImportPath + modifier
-		} else {
-			path = opt.ImportPath + "/" + modifier
+			goBuild("install", args, path, opt)
 		}
-
-		goBuild("install", args, path, opt)
+	} else {
+		goBuild("install", args, opt.ImportPath+"...", opt)
 	}
 }
 
@@ -191,28 +179,20 @@ func source(opt option.Option) {
 }
 
 func test(opt option.Option) {
-	var extra []string
-	var modifiers []string
+	args := append([]string{"-x"}, opt.ExtraFlags...)
 
-	if strings.Contains(opt.Modifier, " ") {
-		modifiers = strings.Split(opt.Modifier, " ")
-	} else {
-		modifiers = []string{opt.Modifier}
-	}
-
-	if len(opt.ExtraFlags) > 0 {
-		extra = strings.Split(opt.ExtraFlags, " ")
-	}
-
-	args := append(extra, "-x")
-	for _, modifier := range modifiers {
-		var path string
-		if modifier == "..." || modifier == "/..." {
-			path = opt.ImportPath + modifier
-		} else {
-			path = opt.ImportPath + "/" + modifier
+	if len(opt.Modifiers) > 0 {
+		for _, modifier := range opt.Modifiers {
+			var path string
+			if modifier == "..." {
+				path = opt.ImportPath + modifier
+			} else {
+				path = opt.ImportPath + "/" + modifier
+			}
+			goBuild("test", args, path, opt)
 		}
-		goBuild("test", args, path, opt)
+	} else {
+		goBuild("test", args, opt.ImportPath+"...", opt)
 	}
 }
 
@@ -261,12 +241,12 @@ func main() {
 		os.Exit(0)
 	}
 
-  //action := args[1]
+	//action := args[1]
 
 	opt := option.Option{}
 	opt.Load()
 	if len(args) >= 2 {
-    opt.Parse(args[2:])
+		opt.Parse(args[2:])
 	}
 
 	if len(opt.BuildRoot) == 0 {
@@ -282,7 +262,7 @@ func main() {
 	opt.BuildSrc = filepath.Join(opt.BuildContrib, "src")
 	opt.BuildBin = filepath.Join(opt.BuildPath, "bin")
 	opt.DestPath = filepath.Join(opt.BuildPath, "/src/"+opt.ImportPath)
-  opt.Save()
+	opt.Save()
 
 	/*switch action {
 	case "arch":

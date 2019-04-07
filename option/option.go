@@ -2,77 +2,60 @@ package option
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"regexp"
-	"fmt"
 	"strings"
 )
 
 // Option command link options
 type Option struct {
-	BuildMode    string `json:"buildmode,omitempty"`
-	ImportPath   string `json:"importpath,omitempty"`
-	Modifier     string `json:"modifier,omitempty"`
-	ExtraFlags   string `json:"extraflags,omitempty"`
-	BuildRoot    string `json:"buildroot,omitempty"`
-	BuildDir     string `json:"builddir,omitempty"`
-	BuildPath    string `json:"buildpath,omitempty"`
-	BuildContrib string `json:"buildcontrib,omitempty"`
-	BuildSrc     string `json:"buildsrc,omitempty"`
-	BuildBin     string `json:"buildbin,omitempty"`
-	DestPath     string `json:"destpath,omitempty"`
+	BuildMode    string   `json:"buildmode,omitempty"`
+	ImportPath   string   `json:"importpath,omitempty"`
+	Modifiers    []string `json:"modifier,omitempty"`
+	ExtraFlags   []string `json:"extraflags,omitempty"`
+	BuildRoot    string   `json:"buildroot,omitempty"`
+	BuildDir     string   `json:"builddir,omitempty"`
+	BuildPath    string   `json:"buildpath,omitempty"`
+	BuildContrib string   `json:"buildcontrib,omitempty"`
+	BuildSrc     string   `json:"buildsrc,omitempty"`
+	BuildBin     string   `json:"buildbin,omitempty"`
+	DestPath     string   `json:"destpath,omitempty"`
 }
-
-/*func Test_Fill(t *testing.T) {
-  testCases := [][]string{
-    []string{"foo ..."},
-    []string{"foo ... bar"},
-    []string{"foo bar ... baz"},
-    []string{"test.go"},
-    []string{},
-  }
-}*/
 
 // Parse parse command line arguments to Option
 func (opt *Option) Parse(args []string) {
 	var importPath string
 	opt.BuildMode, args = parseBuildMode(args)
 	opt.ExtraFlags, args = parseExtraFlags(args)
-  importPath, args = parseImportPath(args)
-  if len(opt.ImportPath) == 0 {
+	importPath, args = parseImportPath(args)
+	if len(opt.ImportPath) == 0 {
 		opt.ImportPath = importPath
 	}
-
-	modifiers := parseModifiers(args)
-	fmt.Println(modifiers)
+	opt.Modifiers = parseModifiers(args)
 }
 
 func parseModifiers(args []string) []string {
 	// [foo] => foo
-	// [foo...] => foo
-	// [foo/...] => foo
+	// [foo...] => foo/...
+	// [foo/...] => foo/...
 	// [foo bar] => foo bar
-	// [foo ... bar] => foo bar
+	// [foo ... bar] => foo/... bar
 	// [foo bar ... bar] => foo bar/...
 	// [foo bar ... baz] => foo bar/... baz
 	modifiers := []string{}
 	m := map[string]struct{}{}
-	ignore := false
-	for _, v := range args {
-		if v == "..." {
-			ignore = true
-		}
-    if !ignore {
-			modifiers = append(modifiers, v)
-			m[v] = struct{}{}
+	for i, v := range args {
+		if i > 0 && v == "..." {
+			modifiers[i-1] = modifiers[i-1] + "/..."
 		} else {
-      if _, ok := m[v]; !ok {
-				modifiers = append(modifiers, v)
+			if _, ok := m[v]; !ok {
 				m[v] = struct{}{}
+				modifiers = append(modifiers, v)
 			}
 		}
 	}
-  return modifiers
+	return modifiers
 }
 
 func parseImportPath(args []string) (string, []string) {
@@ -92,35 +75,31 @@ func parseImportPath(args []string) (string, []string) {
 	return "", args
 }
 
-func parseExtraFlags(args []string) (string, []string) {
-	extraFlags := ""
+func parseExtraFlags(args []string) ([]string, []string) {
+	extraFlags := []string{}
 	newArgs := make([]string, len(args))
 	copy(newArgs, args)
 	re := regexp.MustCompile(`^-\w+flags$`)
 	for i, v := range args {
 		// xxflags, treat the item after it as its content
 		if re.MatchString(v) {
-			s := " " + v
-			if i + 1 < len(args) {
-			  s += " '"
-				s += args[i+1]
-				s += "'"
+			extraFlags = append(extraFlags, v)
+			newArgs = removeFromSlice(newArgs, v)
+			if i+1 < len(args) {
+				s := "'" + args[i+1] + "'"
+				extraFlags = append(extraFlags, s)
 				newArgs = removeFromSlice(newArgs, args[i+1])
 			}
-			extraFlags += s
-			newArgs = removeFromSlice(newArgs, v)
 		} else {
 			// select the "-" but not select the content of xxflags
 			if strings.HasPrefix(v, "-") && (i == 0 || !re.MatchString(args[i-1])) {
-				s := " " + v
-				if i + 1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
-          s += " '"
-					s += args[i+1]
-					s += "'"
+				extraFlags = append(extraFlags, v)
+				newArgs = removeFromSlice(newArgs, v)
+				if i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
+					s := "'" + args[i+1] + "'"
+					extraFlags = append(extraFlags, s)
 					newArgs = removeFromSlice(newArgs, args[i+1])
 				}
-				extraFlags += s
-				newArgs = removeFromSlice(newArgs, v)
 			}
 		}
 	}
@@ -128,25 +107,25 @@ func parseExtraFlags(args []string) (string, []string) {
 }
 
 func parseBuildMode(args []string) (string, []string) {
-  supportedBuildModes := map[string]struct{}{
-		"default": struct{}{},
-		"archive": struct{}{},
-		"c-archive": struct{}{},
-		"c-shared": struct{}{},
-		"shared": struct{}{},
-		"exe": struct{}{},
-		"pie": struct{}{},
-		"plugin": struct{}{},
+	supportedBuildModes := map[string]struct{}{
+		"default":   {},
+		"archive":   {},
+		"c-archive": {},
+		"c-shared":  {},
+		"shared":    {},
+		"exe":       {},
+		"pie":       {},
+		"plugin":    {},
 	}
 
-  str := strings.Join(args, " ")
+	str := strings.Join(args, " ")
 	re := regexp.MustCompile(`^.*(-buildmode=([^ ]+)).*$`)
 
-  if re.MatchString(str) {
-    m := re.FindStringSubmatch(str)
+	if re.MatchString(str) {
+		m := re.FindStringSubmatch(str)
 		if _, ok := supportedBuildModes[m[2]]; ok {
 			buildMode := m[2]
-      if buildMode == "exe" {
+			if buildMode == "exe" {
 				fmt.Println("-buildmode=exe is not recommended, please consider using '-buildmode=pie'.")
 			}
 			if buildMode == "archive" {
@@ -158,13 +137,13 @@ func parseBuildMode(args []string) (string, []string) {
 		}
 	}
 	// default to buildmode "pie"
-  return "pie", args
+	return "pie", args
 }
 
 func removeFromSlice(slice []string, s string) []string {
-  for i, v := range slice {
+	for i, v := range slice {
 		if v == s {
-      return append(slice[:i], slice[i+1:]...)
+			return append(slice[:i], slice[i+1:]...)
 		}
 	}
 	return slice
