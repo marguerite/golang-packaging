@@ -1,0 +1,12 @@
+golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898 h1:0/wzuMR/BDWpajSUtowAgUqer+5dMDi+Y0pE4givFB8=
+golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:tS5OAeadvSyYolvMObzCu26uQq80bCVofPs5CS7zt4c=
+github.com/marguerite/diagnose v0.0.0-20210608143816-5198a120fc78 h1:pYW7SYEaJgo/4DRVluXHyeZK0ICInl50Xi7hQfDdWZU=
+github.com/marguerite/diagnose v0.0.0-20210608143816-5198a120fc78/go.mod h1:N2nQxlAD4GKecwzvBXWbEVkh/pOg4O+H92vICwDZvfM=
+github.com/openSUSE-zh/specfile v0.0.0-20210531134017-01c1c2ea6729 h1:ijA0MuaqoOxBp6L0sRgy7zhgG5vNNZSrzR0Z8MR0L3s=
+github.com/openSUSE-zh/specfile v0.0.0-20210531134017-01c1c2ea6729/go.mod h1:GUTqTetrsw2xhG2mOdESRfYWo3b/y0dtXyINFKqi6jk=
+github.com/marguerite/go-stdlib v5.7.0 h1:k29dPijIWaInO9T3e2p6+2jAsTzU2fMUk23ntQ3i+34=
+github.com/marguerite/go-stdlib v5.7.0/go.mod h1:l7FGl0oZ7zTUkYmgDNfGNMOKn1dbNyw5QFABRfWU6x8=
+golang.org/x/text v0.3.4 h1:DeW867q3f/kTjwErtq252Y+KM3a15KPc5qusYoJL+qM=
+golang.org/x/text v0.3.4/go.mod h1:d7IYfjy2Sm9+PYAxsy6oC/XnVaXQIVH9dJe5/p9RGNs=
+golang.org/x/mod v0.4.2 h1:EdGs9Sdqm9LMj8J05P8+AhyWSIzgOF2PdQoAmBlOqc0=
+golang.org/x/mod v0.4.2/go.mod h1:ugPu1hYMq3oLUQ7ujaFnjJSN90xXVGQVEYaKsRqrAyQ=

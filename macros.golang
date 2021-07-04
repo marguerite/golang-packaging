@@ -6,7 +6,7 @@
 #
 
 
-%go_arch          %(%{_prefix}/lib/rpm/golang.sh arch)
+%go_arch          %(%{_prefix}/lib/rpm/golang-packaging arch)
 %go_ver           %(go version | awk '{print $3}' | sed 's/go//')
 %go_api_ver       %(echo %{go_ver} | grep -Eo '[[:digit:]]+\.[[:digit:]]+')
 
@@ -37,36 +37,36 @@ ExclusiveArch: aarch64 %ix86 x86_64 %arm ppc64 ppc64le s390x
 # (for reference look at go help gopath) and we need a valid importpath (for
 # reference look at go help packages)
 %goprep \
-%{_prefix}/lib/rpm/golang.sh prep
+%{_prefix}/lib/rpm/golang-packaging prep
 
 # gobuild macro actually performs the command "go install", but the go toolchain
 # will install to the $GOPATH which allows us then customise the final install
 # for the distro default locations.
 %gobuild \
-%{_prefix}/lib/rpm/golang.sh build
+%{_prefix}/lib/rpm/golang-packaging build
 
 # goinstall moves the binary files into the bin folder, don't mix it with the go
 # install command since this really just copies files and doesn't execute
 # anything else.
 %goinstall \
-%{_prefix}/lib/rpm/golang.sh install
+%{_prefix}/lib/rpm/golang-packaging install
 
 # gosrc copies over all source files into the contrib source directory to be on
 # a properly packaged location.
 %gosrc \
-%{_prefix}/lib/rpm/golang.sh source
+%{_prefix}/lib/rpm/golang-packaging source
 
 # gotest can execute the integrated test suite to make sure the software really
 # works like expected in our environment.
 %gotest \
-%{_prefix}/lib/rpm/golang.sh test
+%{_prefix}/lib/rpm/golang-packaging test
 
 # godoc should generate useable documentations based on the inline godoc
 # comments of the source files.
 %godoc \
-%{_prefix}/lib/rpm/golang.sh godoc
+%{_prefix}/lib/rpm/golang-packaging godoc
 
 # go_filelist generates different lists of files to be consumed by the file
 # section of an rpm.
 %gofilelist \
-%{_prefix}/lib/rpm/golang.sh filelist
+%{_prefix}/lib/rpm/golang-packaging filelist
