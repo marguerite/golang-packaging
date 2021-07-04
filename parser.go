@@ -13,8 +13,9 @@ import (
 
 func parseImports(files []string, importpath string) map[string]struct{} {
 	imports := make(map[string]struct{})
+	ch := make(chan string)
 	var wg sync.WaitGroup
-	var mux sync.Mutex
+
 	for _, v := range files {
 		wg.Add(1)
 		go func(file string) {
@@ -26,15 +27,30 @@ func parseImports(files []string, importpath string) map[string]struct{} {
 				f.Close()
 				wg.Done()
 			}()
-			parseImport(f, importpath, &mux, &imports)
+			parseImport(f, importpath, ch)
 		}(v)
 	}
-	wg.Wait()
+
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+
+	for {
+		val, ok := <-ch
+		if !ok {
+			break
+		}
+		if _, ok = imports[val]; !ok {
+			imports[val] = struct{}{}
+		}
+	}
+
 	return imports
 
 }
 
-func parseImport(r io.ReadSeeker, importpath string, mux *sync.Mutex, imports *map[string]struct{}) {
+func parseImport(r io.ReadSeeker, importpath string, ch chan string) {
 	var found bool
 	for {
 		buf, err := readLine(r)
@@ -48,11 +64,9 @@ func parseImport(r io.ReadSeeker, importpath string, mux *sync.Mutex, imports *m
 			}
 			buf = buf[8 : len(buf)-2]
 			if err := module.CheckPath(string(buf)); err == nil {
-				mux.Lock()
-				if _, ok := (*imports)[string(buf)]; !ok && !bytes.HasPrefix(buf, []byte(importpath)) {
-					(*imports)[string(buf)] = struct{}{}
+				if !bytes.HasPrefix(buf, []byte(importpath)) {
+					ch <- string(buf)
 				}
-				mux.Unlock()
 			}
 		}
 
@@ -74,11 +88,9 @@ func parseImport(r io.ReadSeeker, importpath string, mux *sync.Mutex, imports *m
 			}
 
 			if err := module.CheckPath(string(buf)); err == nil {
-				mux.Lock()
-				if _, ok := (*imports)[string(buf)]; !ok && !bytes.HasPrefix(buf, []byte(importpath)) {
-					(*imports)[string(buf)] = struct{}{}
+				if !bytes.HasPrefix(buf, []byte(importpath)) {
+					ch <- string(buf)
 				}
-				mux.Unlock()
 			}
 		}
 	}
