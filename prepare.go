@@ -15,7 +15,10 @@ func prepareBuildEnvironment(args []string, module bool) {
 	if err != nil {
 		panic(err)
 	}
-	storeImportPath(importpath)
+	err = storeImportPath(importpath)
+	if err != nil {
+		panic(err)
+	}
 
 	fmt.Printf("Parsed importpath '%s'\n", importpath)
 

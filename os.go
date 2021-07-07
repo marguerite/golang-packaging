@@ -14,7 +14,7 @@ const (
 )
 
 var (
-	HOME = os.Getenv("HOME") //+ "/test"
+	HOME = os.Getenv("HOME")
 )
 
 func ABI() string {

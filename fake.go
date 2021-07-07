@@ -31,8 +31,10 @@ func fakeGoModBatch(handled *map[string]*hash) {
 				if _, ok := BUILDREQUIRES[b]; ok {
 					continue
 				}
-				if val, ok := VENDORED[b]; val.explicit && ok {
-					imports1[b] = val.version
+				if val, ok := VENDORED[b]; ok {
+					if val.explicit {
+						imports1[b] = val.version
+					}
 					continue
 				}
 				fmt.Printf("uncovered import %s\n", k1)

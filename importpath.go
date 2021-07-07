@@ -46,22 +46,10 @@ func storeImportPath(path string) error {
 	return nil
 }
 
-func readImportPath(path string) (string, error) {
-	b := make([]byte, 0, 50)
-
-	for {
-		b1 := make([]byte, 0, 1)
-		n, err := IMPORTPATH.Read(b1)
-		if err == io.EOF {
-			break
-		}
-		if n == 0 {
-			break
-		}
-		if n > 1 {
-			return "", errors.New("read more than 1 byte")
-		}
-		b = append(b, b1[0])
+func readImportPath() (string, error) {
+	b, err := readLine(IMPORTPATH)
+	if err != nil && err != io.EOF {
+		return "", err
 	}
 
 	return string(b), nil
