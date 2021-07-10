@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
-  "path/filepath"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -13,26 +14,26 @@ import (
 )
 
 func buildPackage(args []string) {
-	importpath, err := readImportPath()
+	err := readImportPath()
 	if err != nil {
 		panic(err)
 	}
 
 	// can be "/...", "..." or "@versionsuffix"
-  var modifier string
-  if len(args) > 0 {
-	modifier = args[len(args)-1]
-	switch {
-	case modifier == "...":
-	case modifier[0] == '/':
-		modifier = modifier[1:]
-	case modifier[0] == '@':
-	default:
-		modifier = "/" + modifier
-	}
+	var modifier string
+	if len(args) > 0 {
+		modifier = args[len(args)-1]
+		switch {
+		case modifier == "...":
+		case modifier[0] == '/':
+			modifier = modifier[1:]
+		case modifier[0] == '@':
+		default:
+			modifier = "/" + modifier
+		}
 
-	args = args[:len(args)-1]
-  }
+		args = args[:len(args)-1]
+	}
 	opts := []string{"build", "-v", "-p", "4", "-x"}
 
 	// special handling of "-s" flag
@@ -50,7 +51,7 @@ func buildPackage(args []string) {
 		opts = append(opts, arg)
 	}
 
-	opts = append(opts, importpath+modifier)
+	opts = append(opts, IMPORTPATH+modifier)
 
 	fmt.Printf("GOPATH=%s:%s\n", GOPATH(), GOCONTRIBSRC())
 	fmt.Printf("GOBIN=%s\n", GOBIN())
@@ -70,11 +71,11 @@ func buildPackage(args []string) {
 	fmt.Println(stdoutbuf.String())
 	fmt.Println(stderrbuf.String())
 
-  if err != nil {
-    fmt.Println(err)
-  }
+	if err != nil {
+		fmt.Println(err)
+	}
 
-  if wt.Value != 0 {
-    os.Exit(1)
-  }
+	if wt.Value != 0 {
+		os.Exit(1)
+	}
 }

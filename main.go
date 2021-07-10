@@ -7,9 +7,10 @@ import (
 )
 
 var (
-	IMPORTPATH    *os.File
-	BUILDREQUIRES map[string]string
-	VENDORED      map[string]moduleline
+	IMPORTPATHFILE *os.File
+	IMPORTPATH     string
+	BUILDREQUIRES  map[string]string
+	VENDORED       map[string]moduleline
 )
 
 func main() {
@@ -18,13 +19,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	importpathFile := filepath.Join(RPM_BUILD_DIR(), "importpath.txt")
-	if _, err := os.Stat(importpathFile); os.IsNotExist(err) {
-		IMPORTPATH, _ = os.Create(importpathFile)
+	f := filepath.Join(RPM_BUILD_DIR(), "importpath.txt")
+	if _, err := os.Stat(f); os.IsNotExist(err) {
+		IMPORTPATHFILE, _ = os.Create(f)
 	} else {
-		IMPORTPATH, _ = os.Open(importpathFile)
+		IMPORTPATHFILE, _ = os.Open(f)
+		err := readImportPath()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("IMPORTPATH is %s\n", IMPORTPATH)
 	}
-	defer IMPORTPATH.Close()
+	defer IMPORTPATHFILE.Close()
 
 	module := IsModuleAware()
 

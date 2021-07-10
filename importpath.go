@@ -36,21 +36,22 @@ func parseImportPath(args []string) (string, error) {
 }
 
 func storeImportPath(path string) error {
-	n, err := IMPORTPATH.WriteString(path)
+	n, err := IMPORTPATHFILE.WriteString(path)
 	if err != nil {
 		return err
 	}
 	if n != len(path) {
-		return fmt.Errorf("importpath not fully written to %s\n", IMPORTPATH.Name())
+		return fmt.Errorf("importpath not fully written to %s\n", IMPORTPATHFILE.Name())
 	}
 	return nil
 }
 
-func readImportPath() (string, error) {
-	b, err := readLine(IMPORTPATH)
+func readImportPath() error {
+	b, err := readLine(IMPORTPATHFILE)
 	if err != nil && err != io.EOF {
-		return "", err
+		return err
 	}
 
-	return string(b), nil
+	IMPORTPATH = string(b)
+	return nil
 }

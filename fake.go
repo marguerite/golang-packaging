@@ -70,8 +70,8 @@ func modhash(gomod string) string {
 	return h
 }
 
-func fakeGoMod(dst, importpath string) {
-	gomod := "module " + importpath + "\n\ngo " +
+func fakeGoMod(dst string) {
+	gomod := "module " + IMPORTPATH + "\n\ngo " +
 		Version() + "\n\nrequire (\n"
 	for k, v := range VENDORED {
 		if _, ok := BUILDREQUIRES[base(k)]; v.explicit && !ok {
@@ -173,16 +173,18 @@ type hash struct {
 	zip     string
 }
 
-func fakeMods(importpath string, imports map[string]struct{}, handled *map[string]*hash) {
+func fakeMods(imports map[string]struct{}, handled *map[string]*hash) {
+	fmt.Printf("IMPORTPATH is %s\n", IMPORTPATH)
 	for k := range imports {
 		b := base(k)
 		if val, ok := BUILDREQUIRES[b]; ok {
-			copyDir(k, b, val, GOSRC(), handled)
+			files, _ := dir.Glob(filepath.Join("/usr/share/go/*/contrib/src/", b))
+			copyDir(k, files[0], filepath.Join(GOMOD(), b+"@"+val, strings.TrimPrefix(k, b)), handled)
 			(*handled)[b] = &hash{val, "", ""}
 			continue
 		}
 		if val, ok := VENDORED[b]; ok {
-			copyDir(k, b, val.version, filepath.Join(GOSRC(), importpath, "vendor"), handled)
+			copyDir(k, filepath.Join(GOSRC(), IMPORTPATH, "vendor", b, strings.TrimPrefix(k, b)), filepath.Join(GOMOD(), b+"@"+val.version, strings.TrimPrefix(k, b)), handled)
 			(*handled)[b] = &hash{val.version, "", ""}
 			continue
 		}
@@ -191,11 +193,8 @@ func fakeMods(importpath string, imports map[string]struct{}, handled *map[strin
 	}
 }
 
-func copyDir(importpath, base, version, source string, handled *map[string]*hash) {
-	src := filepath.Join(source, base, strings.TrimPrefix(importpath, base))
-	dst := filepath.Join(GOMOD(), base+"@"+version, strings.TrimPrefix(importpath, base))
-	fmt.Printf("Creating %s\n", dst)
-	fmt.Printf("Copying files from %s\n", src)
+func copyDir(importpath, src, dst string, handled *map[string]*hash) {
+	fmt.Printf("Copying files from %s to %s\n", src, dst)
 	err := dir.MkdirP(dst)
 	if err != nil {
 		return
@@ -203,11 +202,12 @@ func copyDir(importpath, base, version, source string, handled *map[string]*hash
 	files, _ := dir.Glob("*.go", src, "*_test.go")
 	files = buildable(files)
 	for _, v := range files {
+		fmt.Printf("Copying %s\n", v)
 		fileutils.Copy(v, dst)
 	}
 	imports := parseImports(files, importpath)
 	if len(imports) > 0 {
-		fakeMods(importpath, imports, handled)
+		fakeMods(imports, handled)
 	}
 }
 
