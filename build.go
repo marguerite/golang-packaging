@@ -34,7 +34,7 @@ func buildPackage(args []string) {
 
 		args = args[:len(args)-1]
 	}
-	opts := []string{"build", "-v", "-p", "4", "-x"}
+	opts := []string{"install", "-v", "-p", "4", "-x"}
 
 	// special handling of "-s" flag
 	f, _ := strconv.ParseFloat(Version(), 64)
@@ -76,6 +76,7 @@ func buildPackage(args []string) {
 	}
 
 	if wt.Value != 0 {
+		fmt.Printf("Exit status: %d\n", wt.Value)
 		os.Exit(1)
 	}
 }

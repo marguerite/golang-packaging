@@ -32,9 +32,7 @@ func fakeGoModBatch(handled *map[string]*hash) {
 					continue
 				}
 				if val, ok := VENDORED[b]; ok {
-					if val.explicit {
-						imports1[b] = val.version
-					}
+					imports1[b] = val.version
 					continue
 				}
 				fmt.Printf("uncovered import %s\n", k1)
@@ -48,14 +46,20 @@ func fakeGoModBatch(handled *map[string]*hash) {
 			gomod += ")\n"
 		}
 
-		h1 := modhash(gomod)
-		fmt.Printf("\t%s modhash %s\n", k+"@"+v, h1)
-		(*handled)[k].gomod = h1
+		(*handled)[k].gomod = modhash(gomod)
 
-		f, _ := os.Create(filepath.Join(GOMOD(), k+"@"+v, "go.mod"))
+		fmt.Printf("Faking %s\n", filepath.Join(GOMOD(), k+"@"+v, "go.mod"))
+		f, err := os.Create(filepath.Join(GOMOD(), k+"@"+v, "go.mod"))
+		if err != nil {
+			panic(err)
+		}
 		d := filepath.Join(GOMOD(), "cache/download/", k, "@v")
 		dir.MkdirP(d)
-		f1, _ := os.Create(filepath.Join(GOMOD(), "cache/download/", k, "@v", v+".mod"))
+		fmt.Printf("Faking %s\n", filepath.Join(GOMOD(), "cache/download/", k, "@v", v+".mod"))
+		f1, err := os.Create(filepath.Join(GOMOD(), "cache/download/", k, "@v", v+".mod"))
+		if err != nil {
+			panic(err)
+		}
 		f.WriteString(gomod)
 		f1.WriteString(gomod)
 		f.Close()
@@ -77,6 +81,9 @@ func fakeGoMod(dst string) {
 		if _, ok := BUILDREQUIRES[base(k)]; v.explicit && !ok {
 			gomod += "\t" + k + " " + v.version + "\n"
 		}
+	}
+	for k, v := range BUILDREQUIRES {
+		gomod += "\t" + k + " " + v + "\n"
 	}
 	gomod += ")\n"
 	fmt.Println(gomod)
@@ -174,7 +181,6 @@ type hash struct {
 }
 
 func fakeMods(imports map[string]struct{}, handled *map[string]*hash) {
-	fmt.Printf("IMPORTPATH is %s\n", IMPORTPATH)
 	for k := range imports {
 		b := base(k)
 		if val, ok := BUILDREQUIRES[b]; ok {
@@ -196,14 +202,18 @@ func fakeMods(imports map[string]struct{}, handled *map[string]*hash) {
 func copyDir(importpath, src, dst string, handled *map[string]*hash) {
 	fmt.Printf("Copying files from %s to %s\n", src, dst)
 	err := dir.MkdirP(dst)
-	if err != nil {
+	if err != nil && !os.IsExist(err) {
 		return
 	}
 	files, _ := dir.Glob("*.go", src, "*_test.go")
 	files = buildable(files)
 	for _, v := range files {
-		fmt.Printf("Copying %s\n", v)
-		fileutils.Copy(v, dst)
+		if _, err := os.Stat(filepath.Join(dst, filepath.Base(v))); os.IsNotExist(err) {
+			fmt.Printf("Copying %s\n", v)
+			fileutils.Copy(v, dst)
+		} else {
+			fmt.Printf("Skipping existing %s\n", v)
+		}
 	}
 	imports := parseImports(files, importpath)
 	if len(imports) > 0 {

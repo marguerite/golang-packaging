@@ -17,7 +17,6 @@ func prepareBuildEnvironment(args []string, module bool) {
 	}
 	IMPORTPATH = importpath
 	err = storeImportPath(importpath)
-	fmt.Printf("IMPORTPATH is %s\n", importpath)
 	if err != nil {
 		panic(err)
 	}

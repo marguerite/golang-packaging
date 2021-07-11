@@ -28,7 +28,6 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("IMPORTPATH is %s\n", IMPORTPATH)
 	}
 	defer IMPORTPATHFILE.Close()
 

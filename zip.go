@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"golang.org/x/mod/sumdb/dirhash"
 )
@@ -25,12 +26,18 @@ func createZip(handled *map[string]*hash) {
 		zw.Close()
 		f.Close()
 		h1 := ziphash(z)
-		fmt.Printf("\t%s dirhash: %s\n", z, h1)
-		(*handled)[k].zip = h1
+		fmt.Printf("Creating %s\n", z)
+		(*handled)[k].zip = ziphash(z)
 
+		fmt.Printf("Creating %s\n", p+".ziphash")
 		f1, _ := os.Create(p + ".ziphash")
 		f1.WriteString(h1)
 		f1.Close()
+
+		fmt.Printf("Creating %s\n", p+".info")
+		f2, _ := os.Create(p + ".info")
+		f2.WriteString(fmt.Sprintf("{\"Version\":\"%s\",\"Time\":\"%s\"}\n", v, time.Now().Format("2006-01-02T15:04:05Z")))
+		f2.Close()
 	}
 }
 
